@@ -11,11 +11,12 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Random;
@@ -25,28 +26,33 @@ import java.util.Random;
  * Date : 2018/5/30 15:56
  * Description :
  */
-@Slf4j
 public class HttpVerticle extends AbstractVerticle {
+
+    private Logger logger = LoggerFactory.getLogger(HttpVerticle.class);
 
     private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
+    private int port = Integer.valueOf(System.getProperty("etcd.url"));
     private RpcClient rpcClient = new RpcClient(registry);
     private Random random = new Random();
     private List<Endpoint> endpoints = null;
     private final Object lock = new Object();
     private WebClient webClient = WebClient.create(vertx);
 
+
+//    private CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClients.createDefault();
+
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         HttpServer server = vertx.createHttpServer();
         Router router = Router.router(vertx);
         router.route().handler(this::routingHandler);
-        server.requestHandler(router::accept).listen(8080, ar -> {
+        server.requestHandler(router::accept).listen(port, ar -> {
             if (ar.succeeded()) {
-                log.info("HTTP server running on port : " + 8080);
+                logger.info("HTTP server running on port : " + port);
                 startFuture.complete();
             } else {
-                log.error("Could not start a httpServer", ar.cause());
+                logger.error("Could not start a httpServer", ar.cause());
                 startFuture.fail(ar.cause());
             }
         });
@@ -66,7 +72,7 @@ public class HttpVerticle extends AbstractVerticle {
                     if (ar.succeeded()) {
                         response.end(ar.result());
                     } else {
-                        log.error("consumer error", ar.cause());
+                        logger.error("consumer error", ar.cause());
                     }
                 });
             } catch (Exception e) {
@@ -80,7 +86,7 @@ public class HttpVerticle extends AbstractVerticle {
                         final Buffer buffer = Buffer.buffer(ar.result());
                         response.end(buffer);
                     } else {
-                        log.error("provider error", ar.cause());
+                        logger.error("provider error", ar.cause());
                     }
                 });
             } catch (Exception e) {
@@ -121,6 +127,7 @@ public class HttpVerticle extends AbstractVerticle {
 
         String url = "http://" + endpoint.getHost() + ":" + endpoint.getPort();
 
+
         MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
         multiMap.add("interface", interfaceName)
                 .add("method", method)
@@ -132,7 +139,7 @@ public class HttpVerticle extends AbstractVerticle {
                 HttpResponse<Buffer> response = ar.result();
                 resultHandler.handle(Future.succeededFuture(response.body()));
             } else {
-                log.error("send form error", ar.cause());
+                logger.error("send form error", ar.cause());
             }
         });
 
