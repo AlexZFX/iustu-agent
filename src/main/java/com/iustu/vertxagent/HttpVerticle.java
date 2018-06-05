@@ -32,7 +32,7 @@ public class HttpVerticle extends AbstractVerticle {
 
     private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
-    private int port = Integer.valueOf(System.getProperty("etcd.url"));
+    private int port = Integer.valueOf(System.getProperty("server.port"));
     private RpcClient rpcClient = new RpcClient(registry);
     private Random random = new Random();
     private List<Endpoint> endpoints = null;

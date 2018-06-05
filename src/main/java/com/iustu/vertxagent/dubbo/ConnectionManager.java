@@ -24,7 +24,7 @@ public class ConnectionManager implements Connection.OnConnectionListener {
     }
 
     /**
-     * 所有方法都不安全，全部加了锁
+     * 所有方法都不线程安全，全部加了锁
      *
      * @return
      */
