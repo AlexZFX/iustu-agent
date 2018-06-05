@@ -87,20 +87,6 @@
             <groupId>com.coreos</groupId>
             <artifactId>jetcd-core</artifactId>
             <version>0.0.1</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>protobuf-java</artifactId>
-                    <groupId>com.google.protobuf</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>grpc-context</artifactId>
-                    <groupId>io.grpc</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>error_prone_annotations</artifactId>
-                    <groupId>com.google.errorprone</groupId>
-                </exclusion>
-            </exclusions>
             <!--<exclusions>-->
             <!--<exclusion>-->
             <!--<groupId>io.netty</groupId>-->
