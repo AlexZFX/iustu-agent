@@ -14,7 +14,7 @@ public class MainVerticle extends AbstractVerticle {
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         DeploymentOptions options = new DeploymentOptions().setInstances(4);
-        vertx.deployVerticle(new HttpVerticle(), options, ar -> {
+        vertx.deployVerticle("com.iustu.vertxagent.HttpVerticle", options, ar -> {
             if (ar.succeeded()) {
                 startFuture.complete();
             } else {

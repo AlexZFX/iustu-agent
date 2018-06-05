@@ -44,15 +44,10 @@
         </dependency>
 
         <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web-client</artifactId>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpasyncclient</artifactId>
+            <version>4.1</version>
         </dependency>
-
-        <!--<dependency>-->
-        <!--<groupId>org.apache.httpcomponents</groupId>-->
-        <!--<artifactId>httpasyncclient</artifactId>-->
-        <!--<version>4.1</version>-->
-        <!--</dependency>-->
 
         <dependency>
             <groupId>ch.qos.logback</groupId>

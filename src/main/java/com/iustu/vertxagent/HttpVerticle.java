@@ -6,7 +6,10 @@ import com.iustu.vertxagent.register.Endpoint;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.util.concurrent.GenericFutureListener;
-import io.vertx.core.*;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
@@ -15,9 +18,18 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.concurrent.FutureCallback;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -37,10 +49,8 @@ public class HttpVerticle extends AbstractVerticle {
     private Random random = new Random();
     private List<Endpoint> endpoints = null;
     private final Object lock = new Object();
-    private WebClient webClient = WebClient.create(vertx);
 
-
-//    private CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClients.createDefault();
+    private CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClientBuilder.create().setMaxConnTotal(5000).setMaxConnPerRoute(5000).build();
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
@@ -125,23 +135,54 @@ public class HttpVerticle extends AbstractVerticle {
         // TODO: 2018/5/31  
         Endpoint endpoint = endpoints.get(random.nextInt(endpoints.size()));
 
-        String url = "http://" + endpoint.getHost() + ":" + endpoint.getPort();
+        final String url = "http://" + endpoint.getHost() + ":" + endpoint.getPort();
 
+        final HttpPost post = new HttpPost(url);
 
-        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
-        multiMap.add("interface", interfaceName)
-                .add("method", method)
-                .add("parameterTypesString", parameterTypesString)
-                .add("parameter", parameter);
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("interface", interfaceName));
+        params.add(new BasicNameValuePair("method", method));
+        params.add(new BasicNameValuePair("parameterTypesString", parameterTypesString));
+        params.add(new BasicNameValuePair("parameter", parameter));
+        UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(params, "utf-8");
+        post.setEntity(formEntity);
+        httpAsyncClient.execute(post, new FutureCallback<HttpResponse>() {
+            @Override
+            public void completed(HttpResponse httpResponse) {
+                try {
+                    HttpEntity entity = httpResponse.getEntity();
+                    byte[] bytes = EntityUtils.toByteArray(entity);
+                    resultHandler.handle(Future.succeededFuture(Buffer.buffer(bytes)));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
 
-        webClient.post(url).sendForm(multiMap, ar -> {
-            if (ar.succeeded()) {
-                HttpResponse<Buffer> response = ar.result();
-                resultHandler.handle(Future.succeededFuture(response.body()));
-            } else {
-                logger.error("send form error", ar.cause());
+            @Override
+            public void failed(Exception e) {
+                logger.error(e.getLocalizedMessage());
+            }
+
+            @Override
+            public void cancelled() {
+                logger.debug("request cancelled");
             }
         });
+
+//        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
+//        multiMap.add("interface", interfaceName)
+//                .add("method", method)
+//                .add("parameterTypesString", parameterTypesString)
+//                .add("parameter", parameter);
+//
+//        webClient.post(url).sendForm(multiMap, ar -> {
+//            if (ar.succeeded()) {
+//                HttpResponse<Buffer> response = ar.result();
+//                resultHandler.handle(Future.succeededFuture(response.body()));
+//            } else {
+//                logger.error("send form error", ar.cause());
+//            }
+//        });
 
     }
 }
