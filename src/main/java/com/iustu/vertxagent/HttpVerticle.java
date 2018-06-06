@@ -112,6 +112,7 @@ public class HttpVerticle extends AbstractVerticle {
         rpcFuture.addListener((GenericFutureListener<RpcFuture>) future -> {
             if (future.isCancelled()) {
                 // TODO: 2018/6/4 cancelled
+                logger.warn("rpcFuture cancelled");
             } else if (future.isSuccess()) {
                 final byte[] bytes = future.getNow();
                 resultHandler.handle(Future.succeededFuture(bytes));

@@ -34,6 +34,7 @@ public class EtcdRegistry implements IRegistry {
         try {
             this.leaseId = lease.grant(30).get().getID();
         } catch (Exception e) {
+            logger.error(e.getLocalizedMessage());
             e.printStackTrace();
         }
 
@@ -46,6 +47,7 @@ public class EtcdRegistry implements IRegistry {
                 int port = Integer.valueOf(System.getProperty("server.port"));
                 register("com.alibaba.dubbo.performance.demo.provider.IHelloService", port);
             } catch (Exception e) {
+                logger.error(e.getLocalizedMessage());
                 e.printStackTrace();
             }
         }
