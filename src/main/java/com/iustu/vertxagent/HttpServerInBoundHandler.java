@@ -19,8 +19,12 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
+import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,14 +55,19 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
     private List<Endpoint> endpoints = null;
     private final Object lock = new Object();
 
-    private CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClientBuilder.create().setMaxConnTotal(5000).setMaxConnPerRoute(5000).build();
+    private CloseableHttpAsyncClient httpAsyncClient;
+//    private CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClientBuilder.create().setMaxConnTotal(5000).setMaxConnPerRoute(5000).build();
 
 //    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(4);
 
-    public HttpServerInBoundHandler(IRegistry registry) {
+    public HttpServerInBoundHandler(IRegistry registry) throws IOReactorException {
         super();
         this.registry = registry;
         this.rpcClient = new RpcClient(registry);
+        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
+        PoolingNHttpClientConnectionManager cm = new PoolingNHttpClientConnectionManager(ioReactor);
+        cm.setMaxTotal(100);
+        httpAsyncClient = HttpAsyncClients.custom().setConnectionManager(cm).build();
         httpAsyncClient.start();
     }
 
