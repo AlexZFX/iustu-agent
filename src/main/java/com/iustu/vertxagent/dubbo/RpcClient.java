@@ -23,9 +23,7 @@ public class RpcClient {
 
     }
 
-    public RpcFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter) {
-        final RpcFuture rpcFuture = new RpcFuture();
-
+    public RpcFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter, RpcFuture rpcFuture) {
         final ChannelFuture channelFuture = connectManager.getChannelFuture();
         if (channelFuture.isSuccess()) {
             Channel channel = channelFuture.channel();

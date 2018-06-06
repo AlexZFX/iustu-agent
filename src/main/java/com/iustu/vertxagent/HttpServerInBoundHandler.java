@@ -3,19 +3,18 @@ package com.iustu.vertxagent;
 import com.iustu.vertxagent.dubbo.RpcClient;
 import com.iustu.vertxagent.dubbo.model.RpcFuture;
 import com.iustu.vertxagent.register.Endpoint;
-import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.util.concurrent.GenericFutureListener;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -30,6 +29,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
+
 /**
  * Author : Alex
  * Date : 2018/6/6 10:13
@@ -37,16 +39,29 @@ import java.util.*;
  */
 public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
+
     private static Logger logger = LoggerFactory.getLogger(HttpServerInBoundHandler.class);
 
-    private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
+//    private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
-    private RpcClient rpcClient = new RpcClient(registry);
+    private IRegistry registry;
+
+    private RpcClient rpcClient;
+    //    private RpcClient rpcClient = new RpcClient(registry);
     private Random random = new Random();
     private List<Endpoint> endpoints = null;
     private final Object lock = new Object();
 
     private CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClientBuilder.create().setMaxConnTotal(5000).setMaxConnPerRoute(5000).build();
+
+    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(4);
+
+    public HttpServerInBoundHandler(IRegistry registry) {
+        super();
+        this.registry = registry;
+        this.rpcClient = new RpcClient(registry);
+        httpAsyncClient.start();
+    }
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws IOException {
@@ -66,6 +81,14 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
                 e.printStackTrace();
             }
         } else if ("provider".equals(type)) {
+//            ctx.channel().writeAndFlush(httpResponse)
+//                    .addListener((ChannelFutureListener) future1 -> {
+//                        if (future1.isSuccess()) {
+//                            logger.info("provider write done");
+//                        } else {
+//                            logger.info("provider write error", future1.cause());
+//                        }
+//                    });
             provider(ctx.channel(), interfaceName, method, parameterTypesString, parameter);
         } else {
             logger.error("unknown system type");
@@ -78,15 +101,31 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
     }
 
     public void provider(Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) {
-        final RpcFuture rpcFuture = rpcClient.invoke(interfaceName, method, parameterTypesString, parameter);
+        RpcFuture rpcFuture = new RpcFuture(channel.eventLoop());
+        rpcClient.invoke(interfaceName, method, parameterTypesString, parameter, rpcFuture);
         rpcFuture.addListener((GenericFutureListener<RpcFuture>) future -> {
             if (future.isCancelled()) {
                 // TODO: 2018/6/4 cancelled
                 logger.warn("rpcFuture cancelled");
             } else if (future.isSuccess()) {
                 final byte[] bytes = future.getNow();
+                logger.info("receive response: " + new String(bytes));
 //                if (channel.isActive()) {
-                channel.writeAndFlush(bytes);
+                ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
+                DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer);
+                HttpHeaders headers = response.headers();
+                headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
+                headers.set(CONTENT_LENGTH, String.valueOf(bytes.length));
+                channel.writeAndFlush(response)
+                        .addListener((ChannelFutureListener) future1 -> {
+                            if (future1.isSuccess()) {
+                                logger.info("provider write done");
+                            } else {
+                                logger.info("provider write error", future1.cause());
+                            }
+                        })
+                        .addListener(ChannelFutureListener.CLOSE)
+                ;
 //                }
             } else {
                 future.cause().printStackTrace();
@@ -95,7 +134,6 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
     }
 
     public void consumer(Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) throws Exception {
-
         if (null == endpoints) {
             synchronized (lock) {
                 if (null == endpoints) {
@@ -110,6 +148,61 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
 
         final String url = "http://" + endpoint.getHost() + ":" + endpoint.getPort();
 
+//        RequestBody requestBody = new FormBody.Builder()
+//                .add("interface", interfaceName)
+//                .add("method", method)
+//                .add("parameterTypesString", parameterTypesString)
+//                .add("parameter", parameter)
+//                .build();
+//
+//        Request request = new Request.Builder()
+//                .url(url)
+//                .post(requestBody)
+//                .build();
+//        OkHttpClient httpClient = new OkHttpClient.Builder()
+//                .readTimeout(30, TimeUnit.SECONDS)
+//                .build();
+//        Call call = httpClient.newCall(request);
+//        call.enqueue(new Callback() {
+//            @Override
+//            public void onFailure(Call call, IOException e) {
+//                logger.info("resp from provider error: ", e);
+//            }
+//
+//            @Override
+//            public void onResponse(Call call, Response response) throws IOException {
+//                ResponseBody body = response.body();
+//                if (body != null) {
+//                    try {
+//                        byte[] bytes = body.bytes();
+//                        logger.info("resp from provider: " + bytes.length + " | " + bytes);
+//
+////                        String string = new String(bytes);
+//                        ByteBuf buffer = channel.alloc().ioBuffer(bytes.length).writeBytes(bytes);
+//                        DefaultFullHttpResponse newResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer);
+//                        HttpHeaders headers = newResponse.headers();
+//                        headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
+//                        headers.set(CONTENT_LENGTH, String.valueOf(bytes.length));
+//                        channel.writeAndFlush(newResponse)
+//                                .addListener(future -> {
+//                                    if(future.isSuccess()){
+//                                        logger.error("success");
+//                                        logger.error("failed");
+//                                    }
+//                                })
+//                                .addListener(ChannelFutureListener.CLOSE)
+//                        ;
+////                        logger.info("resp from provider: " + string);
+//
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                } else {
+//                    logger.info("resp from provider: body == null");
+//                }
+//            }
+//        });
+
         final HttpPost post = new HttpPost(url);
 
         List<BasicNameValuePair> params = new ArrayList<>();
@@ -119,13 +212,17 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
         params.add(new BasicNameValuePair("parameter", parameter));
         UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(params, "utf-8");
         post.setEntity(formEntity);
-        httpAsyncClient.execute(post, new FutureCallback<org.apache.http.HttpResponse>() {
+        httpAsyncClient.execute(post, new FutureCallback<HttpResponse>() {
             @Override
             public void completed(HttpResponse httpResponse) {
                 try {
-                    HttpEntity entity = httpResponse.getEntity();
-                    byte[] bytes = EntityUtils.toByteArray(entity);
-                    channel.writeAndFlush(bytes);
+                    byte[] bytes = EntityUtils.toByteArray(httpResponse.getEntity());
+                    ByteBuf buffer = channel.alloc().ioBuffer(bytes.length).writeBytes(bytes);
+                    DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer);
+                    HttpHeaders headers = response.headers();
+                    headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
+                    headers.set(CONTENT_LENGTH, String.valueOf(bytes.length));
+                    channel.writeAndFlush(response);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -133,14 +230,70 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
 
             @Override
             public void failed(Exception e) {
-                logger.error(e.getLocalizedMessage());
+                logger.error("consumer response failed " + e.getLocalizedMessage(), e);
             }
 
             @Override
             public void cancelled() {
-                logger.debug("request cancelled");
+                logger.debug("consumer request cancelled");
             }
         });
+//        try (Response response = call.execute()) {
+//            if (response.isSuccessful()) {
+//                channel.writeAndFlush(response.body().bytes());
+//            }
+//        }
+
+//        HttpResponse response = future.get(6000, TimeUnit.MILLISECONDS);
+//        channel.writeAndFlush(EntityUtils.toByteArray(response.getEntity()));
+//                new FutureCallback<org.apache.http.HttpResponse>() {
+//            @Override
+//            public void completed(HttpResponse httpResponse) {
+//                try {
+//                    HttpEntity entity = httpResponse.getEntity();
+//                    byte[] bytes = EntityUtils.toByteArray(entity);
+//                    channel.writeAndFlush(bytes);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            @Override
+//            public void failed(Exception e) {
+//                logger.error("consumer response failed " + e.getLocalizedMessage(), e);
+//            }
+//
+//            @Override
+//            public void cancelled() {
+//                logger.debug("consumer request cancelled");
+//            }
+//        });
+
+//        Bootstrap bootstrap = new Bootstrap();
+//        bootstrap.group(consumerEvenvLoops)
+//                .channel(NioSocketChannel.class)
+//                .handler(new ChannelInitializer<NioSocketChannel>() {
+//                    @Override
+//                    protected void initChannel(NioSocketChannel ch) throws Exception {
+//                        ch.pipeline()
+//                                .addLast(new HttpClientCodec())
+//                                .addLast(new HttpObjectAggregator(4096))
+//                                .addLast(new ChannelInboundHandlerAdapter() {
+//                                    @Override
+//                                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+//                                        super.channelActive(ctx);
+//
+//                                        DefaultFullHttpRequest httpRequest = new DefaultFullHttpRequest(
+//                                                HttpVersion.HTTP_1_1,
+//                                                HttpMethod.POST,
+//                                                url
+//                                        );
+//                                        httpRequest.
+//                                    }
+//                                });
+//                    }
+//                })
+//                .connect(endpoint.getHost(), endpoint.getPort());
     }
 
 

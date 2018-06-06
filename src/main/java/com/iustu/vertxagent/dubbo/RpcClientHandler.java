@@ -17,6 +17,7 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
         if (rpcFuture == null) {
             throw new IllegalStateException("RpcFuture not found");
         }
-        rpcFuture.trySuccess(response.getBytes());
+        byte[] bytes = response.getBytes();
+        rpcFuture.trySuccess(bytes);
     }
 }

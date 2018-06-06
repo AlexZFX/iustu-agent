@@ -4,6 +4,7 @@ import io.netty.channel.Channel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class RpcRequestHolder {
@@ -14,6 +15,10 @@ public class RpcRequestHolder {
     public static void registerRpcFuture(Channel channel, long requestId, RpcFuture rpcFuture) {
         Attribute<Map<Long, RpcFuture>> attr = channel.attr(rpcFutureMapKey);
         Map<Long, RpcFuture> rpcFutureMap = attr.get();
+        if (rpcFutureMap == null) {
+            rpcFutureMap = new HashMap<>();
+            attr.setIfAbsent(rpcFutureMap);
+        }
         RpcFuture oldRpcFuture = rpcFutureMap.put(requestId, rpcFuture);
         if (oldRpcFuture != null) {
             throw new IllegalStateException("requestId " + requestId + " exists");

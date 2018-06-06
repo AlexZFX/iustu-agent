@@ -1,9 +1,14 @@
 package com.iustu.vertxagent.dubbo.model;
 
 import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.EventExecutor;
 
 public class RpcFuture extends DefaultPromise<byte[]> {
-//    @Override
+    public RpcFuture(EventExecutor executor) {
+        super(executor);
+    }
+
+    //    @Override
 //    public boolean isComplete() {
 //        return false;
 //    }
