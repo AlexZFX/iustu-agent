@@ -9,7 +9,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
@@ -54,7 +53,7 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
 
     private CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClientBuilder.create().setMaxConnTotal(5000).setMaxConnPerRoute(5000).build();
 
-    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(4);
+//    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(4);
 
     public HttpServerInBoundHandler(IRegistry registry) {
         super();
