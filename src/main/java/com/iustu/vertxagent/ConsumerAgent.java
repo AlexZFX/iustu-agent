@@ -41,6 +41,7 @@ public class ConsumerAgent {
 
     private final Object lock = new Object();
 
+    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(4);
 
     public void start() throws Exception {
         if (null == endpoints) {
@@ -85,8 +86,8 @@ public class ConsumerAgent {
 //                                    })
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder())
-                                    .addLast(new HttpObjectAggregator(65535))
-                                    .addLast("handler", new ConsumerInBoundHandler(httpAsyncClient, endpoints));
+                                    .addLast(new HttpObjectAggregator(4096))
+                                    .addLast("handler", new ConsumerInBoundHandler(httpAsyncClient, endpoints, consumerEvenvLoops));
                         }
                     })
 //                    .option(ChannelOption.SO_KEEPALIVE, true)

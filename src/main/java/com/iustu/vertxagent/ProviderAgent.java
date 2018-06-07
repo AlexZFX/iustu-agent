@@ -62,7 +62,7 @@ public class ProviderAgent {
 //                                    })
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder())
-                                    .addLast(new HttpObjectAggregator(65535))
+                                    .addLast(new HttpObjectAggregator(4096))
                                     .addLast("handler", new ProviderInBoundHandler(registry, rpcClient));
                         }
                     })
