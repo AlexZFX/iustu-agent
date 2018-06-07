@@ -1,7 +1,6 @@
 package com.iustu.vertxagent;
 
 import com.iustu.vertxagent.dubbo.RpcClient;
-import com.iustu.vertxagent.dubbo.model.RpcFuture;
 import com.iustu.vertxagent.register.Endpoint;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.buffer.ByteBuf;
@@ -13,7 +12,6 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
-import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -40,17 +38,15 @@ import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
  * Date : 2018/6/6 10:13
  * Description :
  */
-public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
 
-    private static Logger logger = LoggerFactory.getLogger(HttpServerInBoundHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(ConsumerInBoundHandler.class);
 
-//    private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
     private IRegistry registry;
 
     private RpcClient rpcClient;
-    //    private RpcClient rpcClient = new RpcClient(registry);
     private Random random = new Random();
     private List<Endpoint> endpoints = null;
     private final Object lock = new Object();
@@ -60,7 +56,7 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
 
 //    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(4);
 
-    public HttpServerInBoundHandler(IRegistry registry) throws IOReactorException {
+    public ConsumerInBoundHandler(IRegistry registry) throws IOReactorException {
         super();
         this.registry = registry;
         this.rpcClient = new RpcClient(registry);
@@ -80,15 +76,12 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
         String method = paramMap.get("method");
         String parameterTypesString = paramMap.get("parameterTypesString");
         String parameter = paramMap.get("parameter");
-        String type = System.getProperty("type");
-        if ("consumer".equals(type)) {
-            try {
-                consumer(ctx.channel(), interfaceName, method, parameterTypesString, parameter);
-            } catch (Exception e) {
-                ctx.channel().close();
-                e.printStackTrace();
-            }
-        } else if ("provider".equals(type)) {
+        try {
+            consumer(ctx.channel(), interfaceName, method, parameterTypesString, parameter);
+        } catch (Exception e) {
+            ctx.channel().close();
+            e.printStackTrace();
+        }
 //            ctx.channel().writeAndFlush(httpResponse)
 //                    .addListener((ChannelFutureListener) future1 -> {
 //                        if (future1.isSuccess()) {
@@ -97,48 +90,12 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
 //                            logger.info("provider write error", future1.cause());
 //                        }
 //                    });
-            provider(ctx.channel(), interfaceName, method, parameterTypesString, parameter);
-        } else {
-            logger.error("unknown system type");
-        }
+
 //        } else {
 //            logger.info(msg.toString());
 //            ctx.channel().close();
 //            logger.error("unknown requset");
 //        }
-    }
-
-    public void provider(Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) {
-        RpcFuture rpcFuture = new RpcFuture(channel.eventLoop());
-        rpcClient.invoke(interfaceName, method, parameterTypesString, parameter, rpcFuture);
-        rpcFuture.addListener((GenericFutureListener<RpcFuture>) future -> {
-            if (future.isCancelled()) {
-                // TODO: 2018/6/4 cancelled
-                logger.warn("rpcFuture cancelled");
-            } else if (future.isSuccess()) {
-                final byte[] bytes = future.getNow();
-                logger.info("receive response: " + new String(bytes));
-//                if (channel.isActive()) {
-                ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
-                DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer);
-                HttpHeaders headers = response.headers();
-                headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
-                headers.set(CONTENT_LENGTH, String.valueOf(bytes.length));
-                channel.writeAndFlush(response)
-//                        .addListener((ChannelFutureListener) future1 -> {
-//                            if (future1.isSuccess()) {
-//                                logger.info("provider write done");
-//                            } else {
-//                                logger.info("provider write error", future1.cause());
-//                            }
-//                        })
-                        .addListener(ChannelFutureListener.CLOSE)
-                ;
-//                }
-            } else {
-                future.cause().printStackTrace();
-            }
-        });
     }
 
     public void consumer(Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) throws Exception {

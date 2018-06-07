@@ -100,7 +100,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>com.iustu.vertxagent.HttpServer</mainClass>
+                            <mainClass>com.iustu.vertxagent.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

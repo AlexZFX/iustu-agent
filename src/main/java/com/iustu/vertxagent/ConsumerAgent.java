@@ -3,7 +3,9 @@ package com.iustu.vertxagent;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -13,15 +15,13 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.SocketAddress;
-
 /**
  * Author : Alex
  * Date : 2018/6/6 9:58
  * Description :
  */
-public class HttpServer {
-    private static Logger logger = LoggerFactory.getLogger(HttpServer.class);
+public class ConsumerAgent {
+    private static Logger logger = LoggerFactory.getLogger(ConsumerAgent.class);
 
     private final int serverPort = Integer.valueOf(System.getProperty("server.port"));
 
@@ -39,31 +39,32 @@ public class HttpServer {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ch.pipeline()
-                                    .addLast(new ChannelDuplexHandler() {
-                                        @Override
-                                        public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-                                            super.close(ctx, promise);
-                                            SocketAddress remoteAddr = ctx.channel().remoteAddress();
-                                            logger.warn("----- channel close " + remoteAddr);
-                                        }
-
-                                        @Override
-                                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                                            super.write(ctx, msg, promise);
-
-                                            if (msg instanceof byte[]) {
-                                                logger.warn("----- channel write " + new String((byte[]) msg));
-                                            }
-                                        }
-                                    })
+//                                    .addLast(new ChannelDuplexHandler() {
+//                                        @Override
+//                                        public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+//                                            super.close(ctx, promise);
+//                                            SocketAddress remoteAddr = ctx.channel().remoteAddress();
+//                                            logger.warn("----- channel close " + remoteAddr);
+//                                        }
+//
+//                                        @Override
+//                                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+//                                            super.write(ctx, msg, promise);
+//
+//                                            if (msg instanceof byte[]) {
+//                                                logger.warn("----- channel write " + new String((byte[]) msg));
+//                                            }
+//                                        }
+//                                    })
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder())
                                     .addLast(new HttpObjectAggregator(65535))
-                                    .addLast("handler", new HttpServerInBoundHandler(registry));
+                                    .addLast("handler", new ConsumerInBoundHandler(registry));
                         }
                     })
 //                    .option(ChannelOption.SO_KEEPALIVE, true)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true);
+                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    .childOption(ChannelOption.SO_KEEPALIVE, false);
             logger.info("server start:" + serverPort);
             //绑定端口，开始接受进来的连接
             ChannelFuture channelFuture = bootstrap.bind(serverPort).sync();
@@ -76,16 +77,6 @@ public class HttpServer {
             logger.info("server stop");
         }
 
-    }
-
-    public static void main(String[] args) {
-        HttpServer server = new HttpServer();
-        try {
-            server.start();
-        } catch (InterruptedException e) {
-            logger.error("server start error");
-            e.printStackTrace();
-        }
     }
 
 }

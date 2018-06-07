@@ -28,6 +28,10 @@ public class RpcRequestHolder {
     public static RpcFuture getAndRemoveRpcFuture(Channel channel, long requestId) {
         Attribute<Map<Long, RpcFuture>> attr = channel.attr(rpcFutureMapKey);
         Map<Long, RpcFuture> rpcFutureMap = attr.get();
+        if (rpcFutureMap == null) {
+            rpcFutureMap = new HashMap<>();
+            attr.setIfAbsent(rpcFutureMap);
+        }
         return rpcFutureMap.remove(requestId);
     }
 }
