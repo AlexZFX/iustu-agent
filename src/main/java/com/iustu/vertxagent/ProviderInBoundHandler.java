@@ -38,10 +38,10 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
     private RpcClient rpcClient;
 
-    public ProviderInBoundHandler(IRegistry registry) {
+    public ProviderInBoundHandler(IRegistry registry, RpcClient rpcClient) {
         super();
         this.registry = registry;
-        this.rpcClient = new RpcClient(registry);
+        this.rpcClient = rpcClient;
 
     }
 

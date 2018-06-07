@@ -1,8 +1,6 @@
 package com.iustu.vertxagent;
 
-import com.iustu.vertxagent.dubbo.RpcClient;
 import com.iustu.vertxagent.register.Endpoint;
-import com.iustu.vertxagent.register.IRegistry;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -17,11 +15,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
-import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -44,27 +38,19 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
     private static Logger logger = LoggerFactory.getLogger(ConsumerInBoundHandler.class);
 
 
-    private IRegistry registry;
 
-    private RpcClient rpcClient;
     private Random random = new Random();
     private List<Endpoint> endpoints = null;
-    private final Object lock = new Object();
 
     private CloseableHttpAsyncClient httpAsyncClient;
 //    private CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClientBuilder.create().setMaxConnTotal(5000).setMaxConnPerRoute(5000).build();
 
 //    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(4);
 
-    public ConsumerInBoundHandler(IRegistry registry) throws IOReactorException {
+    public ConsumerInBoundHandler(CloseableHttpAsyncClient httpAsyncClient, List<Endpoint> endpoints) throws IOReactorException {
         super();
-        this.registry = registry;
-        this.rpcClient = new RpcClient(registry);
-        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
-        PoolingNHttpClientConnectionManager cm = new PoolingNHttpClientConnectionManager(ioReactor);
-        cm.setMaxTotal(100);
-        httpAsyncClient = HttpAsyncClients.custom().setConnectionManager(cm).build();
-        httpAsyncClient.start();
+        this.httpAsyncClient = httpAsyncClient;
+        this.endpoints = endpoints;
     }
 
     @Override
@@ -99,13 +85,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
     }
 
     public void consumer(Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) throws Exception {
-        if (null == endpoints) {
-            synchronized (lock) {
-                if (null == endpoints) {
-                    endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
-                }
-            }
-        }
+
 
         // 简单的负载均衡，随机取一个
         // TODO: 2018/5/31

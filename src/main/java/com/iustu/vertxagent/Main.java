@@ -25,7 +25,7 @@ public class Main {
             ConsumerAgent consumerAgent = new ConsumerAgent();
             try {
                 consumerAgent.start();
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {

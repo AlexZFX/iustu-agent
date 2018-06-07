@@ -1,9 +1,12 @@
 package com.iustu.vertxagent;
 
+import com.iustu.vertxagent.dubbo.RpcClient;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -12,8 +15,6 @@ import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.SocketAddress;
 
 /**
  * Author : Alex
@@ -28,6 +29,8 @@ public class ProviderAgent {
 
     private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
+    private RpcClient rpcClient = new RpcClient(registry);
+
     public void start() throws InterruptedException {
         // TODO: 2018/6/6 配置线程数
         NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
@@ -40,27 +43,27 @@ public class ProviderAgent {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ch.pipeline()
-                                    .addLast(new ChannelDuplexHandler() {
-                                        @Override
-                                        public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-                                            super.close(ctx, promise);
-                                            SocketAddress remoteAddr = ctx.channel().remoteAddress();
-                                            logger.warn("----- channel close " + remoteAddr);
-                                        }
-
-                                        @Override
-                                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                                            super.write(ctx, msg, promise);
-
-                                            if (msg instanceof byte[]) {
-                                                logger.warn("----- channel write " + new String((byte[]) msg));
-                                            }
-                                        }
-                                    })
+//                                    .addLast(new ChannelDuplexHandler() {
+//                                        @Override
+//                                        public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+//                                            super.close(ctx, promise);
+//                                            SocketAddress remoteAddr = ctx.channel().remoteAddress();
+//                                            logger.warn("----- channel close " + remoteAddr);
+//                                        }
+//
+//                                        @Override
+//                                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+//                                            super.write(ctx, msg, promise);
+//
+//                                            if (msg instanceof byte[]) {
+//                                                logger.warn("----- channel write " + new String((byte[]) msg));
+//                                            }
+//                                        }
+//                                    })
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder())
                                     .addLast(new HttpObjectAggregator(65535))
-                                    .addLast("handler", new ProviderInBoundHandler(registry));
+                                    .addLast("handler", new ProviderInBoundHandler(registry, rpcClient));
                         }
                     })
 //                    .option(ChannelOption.SO_KEEPALIVE, true)

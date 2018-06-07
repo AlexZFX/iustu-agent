@@ -77,7 +77,7 @@ public class RpcClient {
         request.setVersion("2.0.0");
         request.setTwoWay(true);
         request.setData(invocation);
-        logger.info("requestId=" + request.getId());
+//        logger.info("requestId=" + request.getId());
         return request;
     }
 }

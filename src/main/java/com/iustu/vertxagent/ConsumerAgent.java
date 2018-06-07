@@ -1,5 +1,6 @@
 package com.iustu.vertxagent;
 
+import com.iustu.vertxagent.register.Endpoint;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
@@ -12,8 +13,15 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Author : Alex
@@ -27,7 +35,26 @@ public class ConsumerAgent {
 
     private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
-    public void start() throws InterruptedException {
+    private CloseableHttpAsyncClient httpAsyncClient;
+
+    private List<Endpoint> endpoints = null;
+
+    private final Object lock = new Object();
+
+
+    public void start() throws Exception {
+        if (null == endpoints) {
+            synchronized (lock) {
+                if (null == endpoints) {
+                    endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
+                }
+            }
+        }
+        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
+        PoolingNHttpClientConnectionManager cm = new PoolingNHttpClientConnectionManager(ioReactor);
+        cm.setMaxTotal(100);
+        httpAsyncClient = HttpAsyncClients.custom().setConnectionManager(cm).build();
+        httpAsyncClient.start();
         // TODO: 2018/6/6 配置线程数
         NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
         NioEventLoopGroup workerGroup = new NioEventLoopGroup(4);
@@ -59,7 +86,7 @@ public class ConsumerAgent {
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder())
                                     .addLast(new HttpObjectAggregator(65535))
-                                    .addLast("handler", new ConsumerInBoundHandler(registry));
+                                    .addLast("handler", new ConsumerInBoundHandler(httpAsyncClient, endpoints));
                         }
                     })
 //                    .option(ChannelOption.SO_KEEPALIVE, true)
