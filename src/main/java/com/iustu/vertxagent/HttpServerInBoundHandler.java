@@ -125,13 +125,13 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
                 headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
                 headers.set(CONTENT_LENGTH, String.valueOf(bytes.length));
                 channel.writeAndFlush(response)
-                        .addListener((ChannelFutureListener) future1 -> {
-                            if (future1.isSuccess()) {
-                                logger.info("provider write done");
-                            } else {
-                                logger.info("provider write error", future1.cause());
-                            }
-                        })
+//                        .addListener((ChannelFutureListener) future1 -> {
+//                            if (future1.isSuccess()) {
+//                                logger.info("provider write done");
+//                            } else {
+//                                logger.info("provider write error", future1.cause());
+//                            }
+//                        })
                         .addListener(ChannelFutureListener.CLOSE)
                 ;
 //                }
@@ -230,7 +230,9 @@ public class HttpServerInBoundHandler extends SimpleChannelInboundHandler<FullHt
                     HttpHeaders headers = response.headers();
                     headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
                     headers.set(CONTENT_LENGTH, String.valueOf(bytes.length));
-                    channel.writeAndFlush(response);
+                    channel.writeAndFlush(response)
+                            .addListener(ChannelFutureListener.CLOSE)
+                    ;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
