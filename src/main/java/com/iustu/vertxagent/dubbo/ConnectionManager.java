@@ -5,15 +5,16 @@ import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConnectionManager implements Connection.OnConnectionListener {
 
 
-    private final NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(4);
+    private final NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(16);
 
-    private final int nConns = 4;
+    private final int nConns = 8;
 
-    private int connIndex = 0;
+    private AtomicInteger connIndex = new AtomicInteger(0);
 
     private final Object lock = new Object();
     private final List<Connection> conns = new ArrayList<>();
@@ -29,13 +30,13 @@ public class ConnectionManager implements Connection.OnConnectionListener {
      * @return
      */
     public ChannelFuture getChannelFuture() {
-//        try {
-//            if (conns.size() == nConns) {
-//                return conns.get(connIndex++ % nConns).connectChannel();
-//            }
-//        } catch (IndexOutOfBoundsException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            if (conns.size() == nConns) {
+                return conns.get(connIndex.getAndIncrement() % nConns).connectChannel();
+            }
+        } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
+        }
 
         synchronized (lock) {
             final int size = conns.size();
@@ -51,7 +52,7 @@ public class ConnectionManager implements Connection.OnConnectionListener {
                     pConn.connectChannel();
                 }
 
-                return conns.get(connIndex++ % size).connectChannel();
+                return conns.get(connIndex.getAndIncrement() % size).connectChannel();
             }
         }
     }

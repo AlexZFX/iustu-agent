@@ -7,11 +7,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.*;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,16 +37,9 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
     private Random random = new Random();
     private List<Endpoint> endpoints = null;
 
-    private CloseableHttpAsyncClient httpAsyncClient;
-//    private CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClientBuilder.create().setMaxConnTotal(5000).setMaxConnPerRoute(5000).build();
-
-    private NioEventLoopGroup consumerEvenvLoops;
-
-    public ConsumerInBoundHandler(CloseableHttpAsyncClient httpAsyncClient, List<Endpoint> endpoints, NioEventLoopGroup consumerEvenvLoops) throws IOReactorException {
+    public ConsumerInBoundHandler(List<Endpoint> endpoints) throws IOReactorException {
         super();
-        this.httpAsyncClient = httpAsyncClient;
         this.endpoints = endpoints;
-        this.consumerEvenvLoops = consumerEvenvLoops;
     }
 
     @Override
@@ -215,7 +206,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 //        });
 
         Bootstrap bootstrap = new Bootstrap();
-        bootstrap.group(consumerEvenvLoops)
+        bootstrap.group(channel.eventLoop())
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
@@ -229,11 +220,19 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
                                     public void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
                                         ByteBuf buffer = msg.content();
 //                                        ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
-                                        DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer);
+                                        DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer.retain());
                                         HttpHeaders headers = response.headers();
                                         headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
-                                        headers.set(CONTENT_LENGTH, String.valueOf(buffer.capacity()));
-                                        channel.writeAndFlush(response);
+                                        headers.set(CONTENT_LENGTH, String.valueOf(buffer.readableBytes()));
+                                        channel.writeAndFlush(response)
+//                                                .addListener(future -> {
+//                                                    if (future.isSuccess()) {
+//                                                        logger.error("return consumer success");
+//                                                    } else {
+//                                                        logger.error("return consumer failed",future.cause());
+//                                                    }
+//                                                })
+                                        ;
                                     }
 
                                     @Override
@@ -245,23 +244,19 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
                                                 url
                                         );
                                         HttpDataFactory factory = new DefaultHttpDataFactory(DefaultHttpDataFactory.MINSIZE);
-                                        HttpPostRequestEncoder bodyRequestEncoder = new HttpPostRequestEncoder(factory, httpRequest, true);
+                                        HttpPostRequestEncoder bodyRequestEncoder = new HttpPostRequestEncoder(factory, httpRequest, false);
                                         bodyRequestEncoder.addBodyAttribute("interface", interfaceName);
                                         bodyRequestEncoder.addBodyAttribute("method", method);
                                         bodyRequestEncoder.addBodyAttribute("parameterTypesString", parameterTypesString);
                                         bodyRequestEncoder.addBodyAttribute("parameter", parameter);
-//                                        List<InterfaceHttpData> bodyList = bodyRequestEncoder.getBodyListAttributes();
                                         httpRequest = bodyRequestEncoder.finalizeRequest();
-//                                        bodyRequestEncoder.setBodyHttpDatas(bodyList);
                                         ctx.channel().writeAndFlush(httpRequest);
                                     }
-
 
                                 });
                     }
                 })
                 .connect(endpoint.getHost(), endpoint.getPort());
-
 
     }
 

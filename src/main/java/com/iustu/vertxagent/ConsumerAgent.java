@@ -14,10 +14,6 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
-import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
-import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +37,7 @@ public class ConsumerAgent {
 
     private final Object lock = new Object();
 
-    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(4);
+//    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(16);
 
     public void start() throws Exception {
         if (null == endpoints) {
@@ -51,14 +47,9 @@ public class ConsumerAgent {
                 }
             }
         }
-        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
-        PoolingNHttpClientConnectionManager cm = new PoolingNHttpClientConnectionManager(ioReactor);
-        cm.setMaxTotal(100);
-        httpAsyncClient = HttpAsyncClients.custom().setConnectionManager(cm).build();
-        httpAsyncClient.start();
         // TODO: 2018/6/6 配置线程数
         NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
-        NioEventLoopGroup workerGroup = new NioEventLoopGroup(4);
+        NioEventLoopGroup workerGroup = new NioEventLoopGroup(16);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
@@ -87,7 +78,7 @@ public class ConsumerAgent {
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder())
                                     .addLast(new HttpObjectAggregator(4096))
-                                    .addLast("handler", new ConsumerInBoundHandler(httpAsyncClient, endpoints, consumerEvenvLoops));
+                                    .addLast("handler", new ConsumerInBoundHandler(endpoints));
                         }
                     })
 //                    .option(ChannelOption.SO_KEEPALIVE, true)
