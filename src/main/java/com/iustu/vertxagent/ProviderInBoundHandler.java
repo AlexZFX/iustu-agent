@@ -53,30 +53,29 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
 //        String method = paramMap.get("method");
 //        String parameterTypesString = paramMap.get("parameterTypesString");
 //        String parameter = paramMap.get("parameter");
+        long requestId = msg.getId();
         String interfaceName = msg.getInterfaceName();
         String method = msg.getMethod();
         String parameterTypesString = msg.getParameterTypesString();
         String parameter = msg.getParameter();
-        provider(ctx.channel(), interfaceName, method, parameterTypesString, parameter);
+        provider(ctx.channel(), requestId, interfaceName, method, parameterTypesString, parameter);
     }
 
 
-    public void provider(Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) {
+    public void provider(Channel channel, long requestId, String interfaceName, String method, String parameterTypesString, String parameter) {
         CommonFuture rpcFuture = new CommonFuture(channel.eventLoop());
         rpcClient.invoke(interfaceName, method, parameterTypesString, parameter, rpcFuture);
         rpcFuture.addListener((GenericFutureListener<CommonFuture>) future -> {
             if (future.isCancelled()) {
-                // TODO: 2018/6/4 cancelled
                 logger.warn("rpcFuture cancelled");
             } else if (future.isSuccess()) {
                 final byte[] bytes = future.getNow();
-                logger.info("receive provider response: " + new String(bytes));
+//                logger.info("receive provider response: " + new String(bytes));
                 AgentResponseProto.AgentResponse response = AgentResponseProto.AgentResponse
                         .newBuilder()
-                        .setId(31231L)
+                        .setId(requestId)
                         .setData(ByteString.copyFrom(bytes))
                         .build();
-
 //                if (channel.isActive()) {
 //                ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
 //                DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer);

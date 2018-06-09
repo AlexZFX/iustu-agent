@@ -25,7 +25,7 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
     private final String type;
 
     public ConnectionManager(String host, int port, String type) {
-        this(host, port, type, 16);
+        this(host, port, type, 4);
     }
 
     public ConnectionManager(String host, int port, String type, int eventLoopGroupSize) {

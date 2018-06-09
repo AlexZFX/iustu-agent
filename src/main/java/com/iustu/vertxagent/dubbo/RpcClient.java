@@ -16,13 +16,13 @@ import java.io.PrintWriter;
 
 public class RpcClient {
 
-    private Logger logger = LoggerFactory.getLogger(RpcClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(RpcClient.class);
 
     public static final int port = Integer.parseInt(System.getProperty("dubbo.protocol.port"));
 
-    public static final String host = "127.0.0.1";
+    private static final String host = "127.0.0.1";
 
-    public static final String type = System.getProperty("type");
+    private static final String type = System.getProperty("type");
 
     private final ConnectionManager connectManager = new ConnectionManager(host, port, type);
 
@@ -59,7 +59,7 @@ public class RpcClient {
                 if (writeFuture.isCancelled()) {
                     rpcFuture.cancel(false);
                 } else if (writeFuture.isSuccess()) {
-                    CommonHolder.registerRpcFuture(writeFuture.channel(), request.getId(), rpcFuture);
+                    CommonHolder.registerFuture(writeFuture.channel(), request.getId(), rpcFuture);
                 } else {
                     rpcFuture.tryFailure(writeFuture.cause());
                 }

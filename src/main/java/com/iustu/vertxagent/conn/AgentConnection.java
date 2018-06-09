@@ -25,7 +25,7 @@ public class AgentConnection extends Connection {
     @Override
     public ChannelFuture connectChannel() {
         if (channelFuture == null) {
-            channelFuture = new Bootstrap().group(channel.eventLoop())
+            channelFuture = new Bootstrap().group(nioEventLoopGroup)
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)

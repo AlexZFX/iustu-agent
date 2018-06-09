@@ -34,8 +34,6 @@ public class ConsumerAgent {
 
     private final Object lock = new Object();
 
-//    private NioEventLoopGroup consumerEvenvLoops = new NioEventLoopGroup(16);
-
     public void start() throws Exception {
         if (null == endpoints) {
             synchronized (lock) {
@@ -80,7 +78,7 @@ public class ConsumerAgent {
                     })
 //                    .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.SO_BACKLOG, 1024)
-                    .childOption(ChannelOption.SO_KEEPALIVE, false);
+                    .childOption(ChannelOption.SO_KEEPALIVE, true);
             logger.info("server start:" + serverPort);
             //绑定端口，开始接受进来的连接
             ChannelFuture channelFuture = bootstrap.bind(serverPort).sync();

@@ -1,23 +1,18 @@
 package com.iustu.vertxagent;
 
-import com.iustu.vertxagent.dubbo.model.AgentRequestProto;
-import com.iustu.vertxagent.dubbo.model.AgentResponseProto;
+import com.iustu.vertxagent.conn.ConnectionManager;
+import com.iustu.vertxagent.dubbo.AgentClient;
+import com.iustu.vertxagent.dubbo.model.CommonFuture;
 import com.iustu.vertxagent.register.Endpoint;
-import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
-import io.netty.handler.codec.protobuf.ProtobufDecoder;
-import io.netty.handler.codec.protobuf.ProtobufEncoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,13 +39,20 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
     private AtomicLong atomicInteger = new AtomicLong(0);
 
     private Random random = new Random();
+
     private List<Endpoint> endpoints = null;
+
+    private static final String type = System.getProperty("type");
+
+
+    private Map<String, AgentClient> agentClientMap = new HashMap<>();
 
     public ConsumerInBoundHandler(List<Endpoint> endpoints) {
         super();
         this.endpoints = endpoints;
     }
 
+    //读入consumer的请求
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws IOException {
 //        if (msg instanceof HttpRequest) {
@@ -89,7 +91,31 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         // TODO: 2018/5/31
         Endpoint endpoint = endpoints.get(random.nextInt(endpoints.size()));
 
-        final String url = "http://" + endpoint.getHost() + ":" + endpoint.getPort();
+        String agentKey = endpoint.getHost() + endpoint.getPort();
+        AgentClient agentClient = agentClientMap.get(agentKey);
+        if (agentClient == null) {
+            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type);
+            agentClient = new AgentClient(connectionManager);
+            agentClientMap.put(agentKey, agentClient);
+        }
+        CommonFuture agentFuture = new CommonFuture(channel.eventLoop());
+        agentClient.invoke(interfaceName, method, parameterTypesString, parameter, agentFuture);
+        agentFuture.addListener((GenericFutureListener<CommonFuture>) future -> {
+            if (future.isSuccess()) {
+                final byte[] bytes = future.getNow();
+                ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
+                DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer.retain());
+                HttpHeaders headers = response.headers();
+                headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
+                headers.set(CONTENT_LENGTH, String.valueOf(buffer.readableBytes()));
+                channel.writeAndFlush(response)
+                ;
+            } else if (future.isCancelled()) {
+                logger.error("agentFuture canceled");
+            } else {
+                logger.error("agentFuture failed", future.cause().getLocalizedMessage());
+            }
+        });
 
 //        RequestBody requestBody = new FormBody.Builder()
 //                .add("interface", interfaceName)
@@ -214,68 +240,68 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 //            }
 //        });
 
-        Bootstrap bootstrap = new Bootstrap();
-        bootstrap.group(channel.eventLoop())
-                .channel(NioSocketChannel.class)
-                .handler(new ChannelInitializer<NioSocketChannel>() {
-                    @Override
-                    protected void initChannel(NioSocketChannel ch) throws Exception {
-                        ch.pipeline()
-                                .addLast(new ProtobufVarint32FrameDecoder())
-                                .addLast(new ProtobufDecoder(AgentResponseProto.AgentResponse.getDefaultInstance()))
-                                .addLast(new ProtobufVarint32LengthFieldPrepender())
-                                .addLast(new ProtobufEncoder())
-                                .addLast(new SimpleChannelInboundHandler<AgentResponseProto.AgentResponse>() {
-
-                                    @Override
-                                    public void channelRead0(ChannelHandlerContext ctx, AgentResponseProto.AgentResponse msg) throws Exception {
-//                                        ByteBuf buffer = msg.getData();
-                                        byte[] bytes = msg.getData().toByteArray();
-                                        ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
-                                        DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer.retain());
-                                        HttpHeaders headers = response.headers();
-                                        headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
-                                        headers.set(CONTENT_LENGTH, String.valueOf(buffer.readableBytes()));
-                                        channel.writeAndFlush(response)
-//                                                .addListener(future -> {
-//                                                    if (future.isSuccess()) {
-//                                                        logger.error("return consumer success");
-//                                                    } else {
-//                                                        logger.error("return consumer failed",future.cause());
-//                                                    }
-//                                                })
-                                        ;
-                                    }
-
-                                    @Override
-                                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                                        super.channelActive(ctx);
-                                        AgentRequestProto.AgentRequest request = AgentRequestProto.AgentRequest
-                                                .newBuilder()
-                                                .setId(atomicInteger.getAndIncrement())
-                                                .setInterfaceName(interfaceName)
-                                                .setMethod(method)
-                                                .setParameterTypesString(parameterTypesString)
-                                                .setParameter(parameter).build();
-//                                        HttpRequest httpRequest = new DefaultFullHttpRequest(
-//                                                HttpVersion.HTTP_1_1,
-//                                                HttpMethod.POST,
-//                                                url
-//                                        );
-//                                        HttpDataFactory factory = new DefaultHttpDataFactory(DefaultHttpDataFactory.MINSIZE);
-//                                        HttpPostRequestEncoder bodyRequestEncoder = new HttpPostRequestEncoder(factory, httpRequest, false);
-//                                        bodyRequestEncoder.addBodyAttribute("interface", interfaceName);
-//                                        bodyRequestEncoder.addBodyAttribute("method", method);
-//                                        bodyRequestEncoder.addBodyAttribute("parameterTypesString", parameterTypesString);
-//                                        bodyRequestEncoder.addBodyAttribute("parameter", parameter);
-//                                        httpRequest = bodyRequestEncoder.finalizeRequest();
-                                        ctx.channel().writeAndFlush(request);
-                                    }
-
-                                });
-                    }
-                })
-                .connect(endpoint.getHost(), endpoint.getPort());
+//        Bootstrap bootstrap = new Bootstrap();
+//        bootstrap.group(channel.eventLoop())
+//                .channel(NioSocketChannel.class)
+//                .handler(new ChannelInitializer<NioSocketChannel>() {
+//                    @Override
+//                    protected void initChannel(NioSocketChannel ch) throws Exception {
+//                        ch.pipeline()
+//                                .addLast(new ProtobufVarint32FrameDecoder())
+//                                .addLast(new ProtobufDecoder(AgentResponseProto.AgentResponse.getDefaultInstance()))
+//                                .addLast(new ProtobufVarint32LengthFieldPrepender())
+//                                .addLast(new ProtobufEncoder())
+//                                .addLast(new SimpleChannelInboundHandler<AgentResponseProto.AgentResponse>() {
+//
+//                                    @Override
+//                                    public void channelRead0(ChannelHandlerContext ctx, AgentResponseProto.AgentResponse msg) throws Exception {
+////                                        ByteBuf buffer = msg.getData();
+//                                        byte[] bytes = msg.getData().toByteArray();
+//                                        ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
+//                                        DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer.retain());
+//                                        HttpHeaders headers = response.headers();
+//                                        headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
+//                                        headers.set(CONTENT_LENGTH, String.valueOf(buffer.readableBytes()));
+//                                        channel.writeAndFlush(response)
+////                                                .addListener(future -> {
+////                                                    if (future.isSuccess()) {
+////                                                        logger.error("return consumer success");
+////                                                    } else {
+////                                                        logger.error("return consumer failed",future.cause());
+////                                                    }
+////                                                })
+//                                        ;
+//                                    }
+//
+//                                    @Override
+//                                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+//                                        super.channelActive(ctx);
+//                                        AgentRequestProto.AgentRequest request = AgentRequestProto.AgentRequest
+//                                                .newBuilder()
+//                                                .setId(atomicInteger.getAndIncrement())
+//                                                .setInterfaceName(interfaceName)
+//                                                .setMethod(method)
+//                                                .setParameterTypesString(parameterTypesString)
+//                                                .setParameter(parameter).build();
+////                                        HttpRequest httpRequest = new DefaultFullHttpRequest(
+////                                                HttpVersion.HTTP_1_1,
+////                                                HttpMethod.POST,
+////                                                url
+////                                        );
+////                                        HttpDataFactory factory = new DefaultHttpDataFactory(DefaultHttpDataFactory.MINSIZE);
+////                                        HttpPostRequestEncoder bodyRequestEncoder = new HttpPostRequestEncoder(factory, httpRequest, false);
+////                                        bodyRequestEncoder.addBodyAttribute("interface", interfaceName);
+////                                        bodyRequestEncoder.addBodyAttribute("method", method);
+////                                        bodyRequestEncoder.addBodyAttribute("parameterTypesString", parameterTypesString);
+////                                        bodyRequestEncoder.addBodyAttribute("parameter", parameter);
+////                                        httpRequest = bodyRequestEncoder.finalizeRequest();
+//                                        ctx.channel().writeAndFlush(request);
+//                                    }
+//
+//                                });
+//                    }
+//                })
+//                .connect(endpoint.getHost(), endpoint.getPort());
 
     }
 
