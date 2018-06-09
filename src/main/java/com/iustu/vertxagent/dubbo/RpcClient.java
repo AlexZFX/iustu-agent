@@ -24,6 +24,7 @@ public class RpcClient {
 
     private static final String type = System.getProperty("type");
 
+    // TODO: 2018/6/9 provider 线程数和连接池大小 
     private final ConnectionManager connectManager = new ConnectionManager(host, port, type);
 
     public RpcClient(IRegistry registry) {

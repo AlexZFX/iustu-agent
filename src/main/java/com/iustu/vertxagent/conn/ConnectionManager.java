@@ -24,6 +24,7 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
     private final int port;
     private final String type;
 
+    // TODO: 2018/6/9 线程数，连接池大小设置
     public ConnectionManager(String host, int port, String type) {
         this(host, port, type, 4);
     }
