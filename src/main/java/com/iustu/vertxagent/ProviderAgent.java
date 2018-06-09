@@ -71,7 +71,8 @@ public class ProviderAgent {
                     })
 //                    .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.SO_BACKLOG, 1024)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true);
+                    .childOption(ChannelOption.SO_KEEPALIVE, true)
+                    .childOption(ChannelOption.TCP_NODELAY, true);
             logger.info("server start:" + serverPort);
             //绑定端口，开始接受进来的连接
             ChannelFuture channelFuture = bootstrap.bind(serverPort).sync();
