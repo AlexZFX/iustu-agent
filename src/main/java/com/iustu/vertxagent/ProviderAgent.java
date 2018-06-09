@@ -66,7 +66,7 @@ public class ProviderAgent {
                                     .addLast(new ProtobufDecoder(AgentRequestProto.AgentRequest.getDefaultInstance()))
                                     .addLast(new ProtobufVarint32LengthFieldPrepender())
                                     .addLast(new ProtobufEncoder())
-                                    .addLast("handler", new ProviderInBoundHandler(registry, rpcClient));
+                                    .addLast(new ProviderInBoundHandler(registry, rpcClient));
                         }
                     })
 //                    .option(ChannelOption.SO_KEEPALIVE, true)

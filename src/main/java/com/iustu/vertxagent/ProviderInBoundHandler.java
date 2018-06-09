@@ -7,23 +7,11 @@ import com.iustu.vertxagent.dubbo.model.AgentResponseProto;
 import com.iustu.vertxagent.dubbo.model.CommonFuture;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.QueryStringDecoder;
-import io.netty.handler.codec.http.multipart.Attribute;
-import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
-import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Author : Alex
@@ -90,7 +78,7 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
 //                                logger.info("provider write error", future1.cause());
 //                            }
 //                        })
-                        .addListener(ChannelFutureListener.CLOSE)
+//                        .addListener(ChannelFutureListener.CLOSE)
                 ;
 //                }
             } else {
@@ -100,24 +88,6 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
     }
 
 
-    private Map<String, String> getParamMap(FullHttpRequest httpRequest) throws IOException {
-        Map<String, String> paramMap = new HashMap<>();
-        if (httpRequest.method() == HttpMethod.GET) {
-            QueryStringDecoder decoder = new QueryStringDecoder(httpRequest.uri());
-            decoder.parameters().forEach((key, value) -> paramMap.put(key, value.get(0)));
-        } else if (httpRequest.method() == HttpMethod.POST) {
-            HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(httpRequest);
-            decoder.offer(httpRequest);
-            List<InterfaceHttpData> paramList = decoder.getBodyHttpDatas();
-            for (InterfaceHttpData param : paramList) {
-                Attribute data = (Attribute) param;
-                paramMap.put(data.getName(), data.getValue());
-            }
-        } else {
-            logger.error("not support method", httpRequest.uri());
-        }
-        return paramMap;
-    }
 
 
 }
