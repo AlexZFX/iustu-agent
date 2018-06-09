@@ -1,5 +1,6 @@
-package com.iustu.vertxagent.dubbo;
+package com.iustu.vertxagent.conn;
 
+import com.iustu.vertxagent.dubbo.RpcClientInitializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -14,34 +15,30 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  * Date : 2018/6/4 13:42
  * Description :
  */
-public class Connection {
+public class RpcClientConnection extends Connection {
 
-    private final NioEventLoopGroup nioEventLoopGroup;
+//    private ChannelFuture channelFuture;
 
-    private final OnConnectionListener connectionListener;
+//    private Channel channel; // assign after connection connected successfully
 
-    private ChannelFuture connectChannelFuture;
 
-    private Channel channel; // assign after connection connected successfully
-
-    public Connection(
+    public RpcClientConnection(
             NioEventLoopGroup nioEventLoopGroup,
-            OnConnectionListener connectionListener) {
-        this.nioEventLoopGroup = nioEventLoopGroup;
-        this.connectionListener = connectionListener;
+            OnConnectionListener connectionListener, String host, int port) {
+        super(nioEventLoopGroup, connectionListener, host, port);
     }
 
+    @Override
     public ChannelFuture connectChannel() {
-        if (connectChannelFuture == null) {
-            int port = Integer.valueOf(System.getProperty("dubbo.protocol.port"));
-            connectChannelFuture = new Bootstrap()
+        if (channelFuture == null) {
+            channelFuture = new Bootstrap()
                     .group(nioEventLoopGroup)
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .channel(NioSocketChannel.class)
                     .handler(new RpcClientInitializer())
-                    .connect("127.0.0.1", port).addListener((ChannelFutureListener) future -> {
+                    .connect(host, port).addListener((ChannelFutureListener) future -> {
                         if (future.isSuccess()) {
                             channel = future.channel();
                             connectionListener.onConnectionConnected(this);
@@ -53,17 +50,18 @@ public class Connection {
                         }
                     });
         }
-
-        return connectChannelFuture;
+        return channelFuture;
     }
 
-    public interface OnConnectionListener {
-
-        void onConnectionConnected(Connection conn);
-
-        void onConnectionConnectFailed(Connection conn);
-
-        void onConnectionClosed(Connection conn);
+    @Override
+    public Channel getChannel() {
+        if (channel != null) {
+            return channel;
+        } else {
+            channelFuture = connectChannel();
+            return channel;
+        }
     }
+
 
 }

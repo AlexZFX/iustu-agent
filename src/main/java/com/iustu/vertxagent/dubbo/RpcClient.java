@@ -1,5 +1,6 @@
 package com.iustu.vertxagent.dubbo;
 
+import com.iustu.vertxagent.conn.ConnectionManager;
 import com.iustu.vertxagent.dubbo.model.*;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.channel.Channel;
@@ -17,13 +18,19 @@ public class RpcClient {
 
     private Logger logger = LoggerFactory.getLogger(RpcClient.class);
 
-    private final ConnectionManager connectManager = new ConnectionManager();
+    public static final int port = Integer.parseInt(System.getProperty("dubbo.protocol.port"));
+
+    public static final String host = "127.0.0.1";
+
+    public static final String type = System.getProperty("type");
+
+    private final ConnectionManager connectManager = new ConnectionManager(host, port, type);
 
     public RpcClient(IRegistry registry) {
 
     }
 
-    public RpcFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter, RpcFuture rpcFuture) {
+    public CommonFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter, CommonFuture rpcFuture) {
         final ChannelFuture channelFuture = connectManager.getChannelFuture();
         if (channelFuture.isSuccess()) {
             Channel channel = channelFuture.channel();
@@ -45,14 +52,14 @@ public class RpcClient {
         return rpcFuture;
     }
 
-    private void sendRequest(RpcFuture rpcFuture, Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) {
+    private void sendRequest(CommonFuture rpcFuture, Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) {
         try {
             final Request request = createRequest(interfaceName, method, parameterTypesString, parameter);
             channel.writeAndFlush(request).addListener((ChannelFutureListener) writeFuture -> {
                 if (writeFuture.isCancelled()) {
                     rpcFuture.cancel(false);
                 } else if (writeFuture.isSuccess()) {
-                    RpcRequestHolder.registerRpcFuture(writeFuture.channel(), request.getId(), rpcFuture);
+                    CommonHolder.registerRpcFuture(writeFuture.channel(), request.getId(), rpcFuture);
                 } else {
                     rpcFuture.tryFailure(writeFuture.cause());
                 }

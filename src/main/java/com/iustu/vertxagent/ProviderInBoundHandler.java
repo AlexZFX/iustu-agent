@@ -1,7 +1,7 @@
 package com.iustu.vertxagent;
 
 import com.iustu.vertxagent.dubbo.RpcClient;
-import com.iustu.vertxagent.dubbo.model.RpcFuture;
+import com.iustu.vertxagent.dubbo.model.CommonFuture;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -57,9 +57,9 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
 
     public void provider(Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) {
-        RpcFuture rpcFuture = new RpcFuture(channel.eventLoop());
+        CommonFuture rpcFuture = new CommonFuture(channel.eventLoop());
         rpcClient.invoke(interfaceName, method, parameterTypesString, parameter, rpcFuture);
-        rpcFuture.addListener((GenericFutureListener<RpcFuture>) future -> {
+        rpcFuture.addListener((GenericFutureListener<CommonFuture>) future -> {
             if (future.isCancelled()) {
                 // TODO: 2018/6/4 cancelled
                 logger.warn("rpcFuture cancelled");

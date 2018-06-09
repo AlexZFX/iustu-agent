@@ -1,7 +1,7 @@
 package com.iustu.vertxagent.dubbo;
 
-import com.iustu.vertxagent.dubbo.model.RpcFuture;
-import com.iustu.vertxagent.dubbo.model.RpcRequestHolder;
+import com.iustu.vertxagent.dubbo.model.CommonFuture;
+import com.iustu.vertxagent.dubbo.model.CommonHolder;
 import com.iustu.vertxagent.dubbo.model.RpcResponse;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -13,9 +13,9 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, RpcResponse response) {
         final Channel channel = channelHandlerContext.channel();
         final long requestId = response.getRequestId();
-        final RpcFuture rpcFuture = RpcRequestHolder.getAndRemoveRpcFuture(channel, requestId);
+        final CommonFuture rpcFuture = CommonHolder.getAndRemoveRpcFuture(channel, requestId);
         if (rpcFuture == null) {
-            throw new IllegalStateException("RpcFuture not found");
+            throw new IllegalStateException("CommonFuture not found");
         }
         byte[] bytes = response.getBytes();
         rpcFuture.trySuccess(bytes);

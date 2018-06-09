@@ -13,7 +13,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +29,6 @@ public class ConsumerAgent {
     private final int serverPort = Integer.valueOf(System.getProperty("server.port"));
 
     private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
-
-    private CloseableHttpAsyncClient httpAsyncClient;
 
     private List<Endpoint> endpoints = null;
 

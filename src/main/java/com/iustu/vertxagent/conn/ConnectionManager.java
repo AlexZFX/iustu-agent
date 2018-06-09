@@ -1,4 +1,4 @@
-package com.iustu.vertxagent.dubbo;
+package com.iustu.vertxagent.conn;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ConnectionManager implements Connection.OnConnectionListener {
+public class ConnectionManager implements RpcClientConnection.OnConnectionListener {
 
 
-    private final NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(16);
+    private final NioEventLoopGroup eventLoopGroup;
 
-    private final int nConns = 8;
+    private final int nConns;
 
     private AtomicInteger connIndex = new AtomicInteger(0);
 
@@ -20,7 +20,24 @@ public class ConnectionManager implements Connection.OnConnectionListener {
     private final List<Connection> conns = new ArrayList<>();
     private Connection pConn;
 
-    public ConnectionManager() {
+    private final String host;
+    private final int port;
+    private final String type;
+
+    public ConnectionManager(String host, int port, String type) {
+        this(host, port, type, 16);
+    }
+
+    public ConnectionManager(String host, int port, String type, int eventLoopGroupSize) {
+        this(host, port, type, eventLoopGroupSize, 4);
+    }
+
+    public ConnectionManager(String host, int port, String type, int eventLoopGroupSize, int connSize) {
+        this.host = host;
+        this.port = port;
+        this.type = type;
+        this.eventLoopGroup = new NioEventLoopGroup(eventLoopGroupSize);
+        this.nConns = connSize;
 
     }
 
@@ -42,18 +59,27 @@ public class ConnectionManager implements Connection.OnConnectionListener {
             final int size = conns.size();
             if (size == 0) {
                 if (pConn == null) {
-                    pConn = new Connection(eventLoopGroup, this);
+                    initPConn();
                 }
-
                 return pConn.connectChannel();
             } else {
                 if (size < nConns && pConn == null) {
-                    pConn = new Connection(eventLoopGroup, this);
+                    initPConn();
                     pConn.connectChannel();
                 }
 
                 return conns.get(connIndex.getAndIncrement() % size).connectChannel();
             }
+        }
+    }
+
+    private void initPConn() {
+        if ("consumer".equals(type)) {
+            pConn = new AgentConnection(eventLoopGroup, this, host, port);
+        } else if ("provider".equals(type)) {
+            pConn = new RpcClientConnection(eventLoopGroup, this, host, port);
+        } else {
+            throw new IllegalArgumentException("type is fault");
         }
     }
 
