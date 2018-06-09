@@ -94,7 +94,8 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         String agentKey = endpoint.getHost() + endpoint.getPort();
         AgentClient agentClient = agentClientMap.get(agentKey);
         if (agentClient == null) {
-            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type);
+            // TODO: 2018/6/9 consumer 线程和连接池大小 
+            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, 2, 1);
             agentClient = new AgentClient(connectionManager);
             agentClientMap.put(agentKey, agentClient);
         }

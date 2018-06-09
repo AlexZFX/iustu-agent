@@ -44,7 +44,7 @@ public class ConsumerAgent {
         }
         // TODO: 2018/6/6 配置线程数
         NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
-        NioEventLoopGroup workerGroup = new NioEventLoopGroup(16);
+        NioEventLoopGroup workerGroup = new NioEventLoopGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
