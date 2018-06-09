@@ -1,5 +1,7 @@
 package com.iustu.vertxagent;
 
+import com.iustu.vertxagent.dubbo.model.AgentRequestProto;
+import com.iustu.vertxagent.dubbo.model.AgentResponseProto;
 import com.iustu.vertxagent.register.Endpoint;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -9,8 +11,13 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.multipart.*;
-import org.apache.http.nio.reactor.IOReactorException;
+import io.netty.handler.codec.http.multipart.Attribute;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
@@ -33,11 +41,12 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
     private static Logger logger = LoggerFactory.getLogger(ConsumerInBoundHandler.class);
 
+    private AtomicLong atomicInteger = new AtomicLong(0);
 
     private Random random = new Random();
     private List<Endpoint> endpoints = null;
 
-    public ConsumerInBoundHandler(List<Endpoint> endpoints) throws IOReactorException {
+    public ConsumerInBoundHandler(List<Endpoint> endpoints) {
         super();
         this.endpoints = endpoints;
     }
@@ -212,14 +221,17 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ch.pipeline()
-                                .addLast(new HttpClientCodec())
-                                .addLast(new HttpObjectAggregator(4096))
-                                .addLast(new SimpleChannelInboundHandler<FullHttpResponse>() {
+                                .addLast(new ProtobufVarint32FrameDecoder())
+                                .addLast(new ProtobufDecoder(AgentResponseProto.AgentResponse.getDefaultInstance()))
+                                .addLast(new ProtobufVarint32LengthFieldPrepender())
+                                .addLast(new ProtobufEncoder())
+                                .addLast(new SimpleChannelInboundHandler<AgentResponseProto.AgentResponse>() {
 
                                     @Override
-                                    public void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
-                                        ByteBuf buffer = msg.content();
-//                                        ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
+                                    public void channelRead0(ChannelHandlerContext ctx, AgentResponseProto.AgentResponse msg) throws Exception {
+//                                        ByteBuf buffer = msg.getData();
+                                        byte[] bytes = msg.getData().toByteArray();
+                                        ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
                                         DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer.retain());
                                         HttpHeaders headers = response.headers();
                                         headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
@@ -238,19 +250,26 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
                                     @Override
                                     public void channelActive(ChannelHandlerContext ctx) throws Exception {
                                         super.channelActive(ctx);
-                                        HttpRequest httpRequest = new DefaultFullHttpRequest(
-                                                HttpVersion.HTTP_1_1,
-                                                HttpMethod.POST,
-                                                url
-                                        );
-                                        HttpDataFactory factory = new DefaultHttpDataFactory(DefaultHttpDataFactory.MINSIZE);
-                                        HttpPostRequestEncoder bodyRequestEncoder = new HttpPostRequestEncoder(factory, httpRequest, false);
-                                        bodyRequestEncoder.addBodyAttribute("interface", interfaceName);
-                                        bodyRequestEncoder.addBodyAttribute("method", method);
-                                        bodyRequestEncoder.addBodyAttribute("parameterTypesString", parameterTypesString);
-                                        bodyRequestEncoder.addBodyAttribute("parameter", parameter);
-                                        httpRequest = bodyRequestEncoder.finalizeRequest();
-                                        ctx.channel().writeAndFlush(httpRequest);
+                                        AgentRequestProto.AgentRequest request = AgentRequestProto.AgentRequest
+                                                .newBuilder()
+                                                .setId(atomicInteger.getAndIncrement())
+                                                .setInterfaceName(interfaceName)
+                                                .setMethod(method)
+                                                .setParameterTypesString(parameterTypesString)
+                                                .setParameter(parameter).build();
+//                                        HttpRequest httpRequest = new DefaultFullHttpRequest(
+//                                                HttpVersion.HTTP_1_1,
+//                                                HttpMethod.POST,
+//                                                url
+//                                        );
+//                                        HttpDataFactory factory = new DefaultHttpDataFactory(DefaultHttpDataFactory.MINSIZE);
+//                                        HttpPostRequestEncoder bodyRequestEncoder = new HttpPostRequestEncoder(factory, httpRequest, false);
+//                                        bodyRequestEncoder.addBodyAttribute("interface", interfaceName);
+//                                        bodyRequestEncoder.addBodyAttribute("method", method);
+//                                        bodyRequestEncoder.addBodyAttribute("parameterTypesString", parameterTypesString);
+//                                        bodyRequestEncoder.addBodyAttribute("parameter", parameter);
+//                                        httpRequest = bodyRequestEncoder.finalizeRequest();
+                                        ctx.channel().writeAndFlush(request);
                                     }
 
                                 });

@@ -1,0 +1,10 @@
+syntax = "proto3";
+//package com.iustu.vertxagent.dubbo.model;
+
+option java_outer_classname = "AgentResponseProto";
+
+message AgentResponse {
+    int64 id = 1;
+    bytes data = 2;
+}
+

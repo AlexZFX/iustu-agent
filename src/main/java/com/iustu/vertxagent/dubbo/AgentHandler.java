@@ -1,6 +1,5 @@
 package com.iustu.vertxagent.dubbo;
 
-import com.iustu.vertxagent.dubbo.model.AgentResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -9,9 +8,10 @@ import io.netty.channel.SimpleChannelInboundHandler;
  * Date : 2018/6/9 10:06
  * Description :
  */
-public class AgentHandler extends SimpleChannelInboundHandler<AgentResponse> {
+public class AgentHandler extends SimpleChannelInboundHandler {
+
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, AgentResponse msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
 
     }
 }

@@ -1,6 +1,7 @@
 package com.iustu.vertxagent;
 
 import com.iustu.vertxagent.dubbo.RpcClient;
+import com.iustu.vertxagent.dubbo.model.AgentRequestProto;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
@@ -10,9 +11,10 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,9 +62,10 @@ public class ProviderAgent {
 //                                            }
 //                                        }
 //                                    })
-                                    .addLast("encoder", new HttpResponseEncoder())
-                                    .addLast("decoder", new HttpRequestDecoder())
-                                    .addLast(new HttpObjectAggregator(4096))
+                                    .addLast(new ProtobufVarint32FrameDecoder())
+                                    .addLast(new ProtobufDecoder(AgentRequestProto.AgentRequest.getDefaultInstance()))
+                                    .addLast(new ProtobufVarint32LengthFieldPrepender())
+                                    .addLast(new ProtobufEncoder())
                                     .addLast("handler", new ProviderInBoundHandler(registry, rpcClient));
                         }
                     })

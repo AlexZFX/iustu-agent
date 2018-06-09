@@ -1,0 +1,14 @@
+syntax = "proto3";
+//package com.iustu.vertxagent.dubbo.model;
+
+//option java_package = "com.iustu.vertxagent.dubbo.model";
+option java_outer_classname = "AgentRequestProto";
+
+message AgentRequest {
+    int64 id = 1;
+    string interfaceName = 2;
+    string method = 3;
+    string parameterTypesString = 4;
+    string parameter = 5;
+}
+
