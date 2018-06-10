@@ -9,7 +9,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
@@ -36,8 +36,8 @@ public class ProviderAgent {
 
     public void start() throws InterruptedException {
         // TODO: 2018/6/6 配置线程数
-        EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
-        EventLoopGroup workerGroup = new EpollEventLoopGroup(8);
+        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
+        EventLoopGroup workerGroup = new NioEventLoopGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
