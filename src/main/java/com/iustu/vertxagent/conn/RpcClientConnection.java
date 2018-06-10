@@ -4,7 +4,7 @@ import com.iustu.vertxagent.dubbo.RpcClientInitializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.epoll.EpollSocketChannel;
 
 /**
  * Author : Alex
@@ -32,7 +32,8 @@ public class RpcClientConnection extends Connection {
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                    .channel(NioSocketChannel.class)
+//                    .channel(NioSocketChannel.class)
+                    .channel(EpollSocketChannel.class)
                     .handler(new RpcClientInitializer())
                     .connect(host, port).addListener((ChannelFutureListener) future -> {
                         if (future.isSuccess()) {
