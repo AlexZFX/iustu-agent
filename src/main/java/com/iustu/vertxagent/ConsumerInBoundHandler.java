@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
@@ -39,6 +40,10 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
     private List<Endpoint> endpoints = null;
 
+    private int endpointSize = 0;
+
+    private final AtomicInteger atomicInteger = new AtomicInteger(0);
+
     private static final String type = System.getProperty("type");
 
 
@@ -47,6 +52,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
     public ConsumerInBoundHandler(List<Endpoint> endpoints) {
         super();
         this.endpoints = endpoints;
+        this.endpointSize = endpoints.size();
     }
 
     //读入consumer的请求
@@ -86,7 +92,8 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
         // 简单的负载均衡，随机取一个
         // TODO: 2018/5/31
-        Endpoint endpoint = endpoints.get(random.nextInt(endpoints.size()));
+//        Endpoint endpoint = endpoints.get(random.nextInt(endpoints.size()));
+        Endpoint endpoint = endpoints.get(atomicInteger.getAndIncrement() % endpointSize);
 
         String agentKey = endpoint.getHost() + endpoint.getPort();
         AgentClient agentClient = agentClientMap.get(agentKey);
