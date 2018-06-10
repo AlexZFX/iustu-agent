@@ -4,11 +4,11 @@ import com.iustu.vertxagent.register.Endpoint;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -35,6 +35,9 @@ public class ConsumerAgent {
 
     private final Object lock = new Object();
 
+//    private final  executionHandler = new ExecutionHandler(
+//            new MemoryAwareThreadPoolExecutor(16, 1048576, 1048576));
+
     public void start() throws Exception {
         if (null == endpoints) {
             synchronized (lock) {
@@ -44,8 +47,9 @@ public class ConsumerAgent {
             }
         }
         // TODO: 2018/6/6 配置线程数
-        NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
-        NioEventLoopGroup workerGroup = new NioEventLoopGroup(8);
+//        NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
+        EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
+        EventLoopGroup workerGroup = new EpollEventLoopGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
@@ -71,6 +75,7 @@ public class ConsumerAgent {
 //                                            }
 //                                        }
 //                                    })
+                                    .addLast()
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder())
                                     .addLast(new HttpObjectAggregator(4096))
@@ -78,8 +83,8 @@ public class ConsumerAgent {
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)
-                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                    .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+//                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+//                    .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
                     .childOption(ChannelOption.TCP_NODELAY, true);
             logger.info("server start:" + serverPort);

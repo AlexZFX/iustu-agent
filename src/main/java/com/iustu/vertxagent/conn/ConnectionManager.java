@@ -1,7 +1,8 @@
 package com.iustu.vertxagent.conn;
 
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.Random;
 public class ConnectionManager implements RpcClientConnection.OnConnectionListener {
 
 
-    private final NioEventLoopGroup eventLoopGroup;
+    private final EventLoopGroup eventLoopGroup;
 
     private final int nConns;
 
@@ -39,7 +40,7 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
         this.host = host;
         this.port = port;
         this.type = type;
-        this.eventLoopGroup = new NioEventLoopGroup(eventLoopGroupSize);
+        this.eventLoopGroup = new EpollEventLoopGroup(eventLoopGroupSize);
         this.nConns = connSize;
 
     }

@@ -2,7 +2,7 @@ package com.iustu.vertxagent.conn;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
 
 /**
  * Author : Alex
@@ -11,7 +11,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
  */
 public abstract class Connection {
 
-    protected final NioEventLoopGroup nioEventLoopGroup;
+    protected final EventLoopGroup eventLoopGroup;
 
     protected final RpcClientConnection.OnConnectionListener connectionListener;
 
@@ -24,11 +24,11 @@ public abstract class Connection {
     protected final int port;
 
     public Connection(
-            NioEventLoopGroup nioEventLoopGroup,
+            EventLoopGroup eventLoopGroup,
             OnConnectionListener connectionListener,
             String host,
             int port) {
-        this.nioEventLoopGroup = nioEventLoopGroup;
+        this.eventLoopGroup = eventLoopGroup;
         this.connectionListener = connectionListener;
         this.host = host;
         this.port = port;

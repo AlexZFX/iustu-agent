@@ -3,11 +3,7 @@ package com.iustu.vertxagent.conn;
 import com.iustu.vertxagent.dubbo.RpcClientInitializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
@@ -23,16 +19,16 @@ public class RpcClientConnection extends Connection {
 
 
     public RpcClientConnection(
-            NioEventLoopGroup nioEventLoopGroup,
+            EventLoopGroup eventLoopGroup,
             OnConnectionListener connectionListener, String host, int port) {
-        super(nioEventLoopGroup, connectionListener, host, port);
+        super(eventLoopGroup, connectionListener, host, port);
     }
 
     @Override
     public ChannelFuture connectChannel() {
         if (channelFuture == null) {
             channelFuture = new Bootstrap()
-                    .group(nioEventLoopGroup)
+                    .group(eventLoopGroup)
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
