@@ -4,6 +4,7 @@ import com.iustu.vertxagent.register.Endpoint;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -51,7 +52,7 @@ public class ConsumerAgent {
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
+                        protected void initChannel(SocketChannel ch) {
                             ch.pipeline()
 //                                    .addLast(new ChannelDuplexHandler() {
 //                                        @Override
@@ -76,8 +77,9 @@ public class ConsumerAgent {
                                     .addLast("handler", new ConsumerInBoundHandler(endpoints));
                         }
                     })
-//                    .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.SO_BACKLOG, 1024)
+                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                    .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
                     .childOption(ChannelOption.TCP_NODELAY, true);
             logger.info("server start:" + serverPort);

@@ -36,11 +36,6 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, AgentRequestProto.AgentRequest msg) throws Exception {
-//        Map<String, String> paramMap = getParamMap(msg);
-//        String interfaceName = paramMap.get("interface");
-//        String method = paramMap.get("method");
-//        String parameterTypesString = paramMap.get("parameterTypesString");
-//        String parameter = paramMap.get("parameter");
         long requestId = msg.getId();
         String interfaceName = msg.getInterfaceName();
         String method = msg.getMethod();
