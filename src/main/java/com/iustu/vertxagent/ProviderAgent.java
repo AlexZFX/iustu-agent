@@ -5,7 +5,6 @@ import com.iustu.vertxagent.dubbo.model.AgentRequestProto;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -76,8 +75,8 @@ public class ProviderAgent {
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)
-                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                    .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+//                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+//                    .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
                     .childOption(ChannelOption.TCP_NODELAY, true);
             logger.info("server start:" + serverPort);

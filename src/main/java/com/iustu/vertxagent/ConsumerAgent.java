@@ -4,7 +4,6 @@ import com.iustu.vertxagent.register.Endpoint;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -87,8 +86,8 @@ public class ConsumerAgent {
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)
-                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                    .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
+//                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+//                    .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
                     .childOption(ChannelOption.TCP_NODELAY, true);
             logger.info("server start:" + serverPort);
