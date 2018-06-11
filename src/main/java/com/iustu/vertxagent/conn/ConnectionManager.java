@@ -33,7 +33,7 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
     }
 
     public ConnectionManager(String host, int port, String type, EventLoopGroup eventLoopGroup) {
-        this(host, port, type, eventLoopGroup, 4);
+        this(host, port, type, eventLoopGroup, 8);
     }
 
     public ConnectionManager(String host, int port, String type, EventLoopGroup eventLoopGroup, int connSize) {

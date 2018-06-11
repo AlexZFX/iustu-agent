@@ -35,12 +35,13 @@ public class ProviderAgent {
 
     private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
-    private RpcClient rpcClient = new RpcClient(registry);
+    private RpcClient rpcClient;
 
     public void start() throws InterruptedException {
         // TODO: 2018/6/6 配置线程数
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
-        EventLoopGroup workerGroup = new EpollEventLoopGroup(8);
+        EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
+        rpcClient = new RpcClient(workerGroup);
         EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();

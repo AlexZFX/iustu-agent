@@ -2,10 +2,10 @@ package com.iustu.vertxagent.dubbo;
 
 import com.iustu.vertxagent.conn.ConnectionManager;
 import com.iustu.vertxagent.dubbo.model.*;
-import com.iustu.vertxagent.register.IRegistry;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.EventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,11 +24,14 @@ public class RpcClient {
 
     private static final String type = System.getProperty("type");
 
+//    private final EventLoopGroup eventLoopGroup;
+
     // TODO: 2018/6/9 provider 线程数和连接池大小 
-    private final ConnectionManager connectManager = new ConnectionManager(host, port, type);
+    private final ConnectionManager connectManager;
 
-    public RpcClient(IRegistry registry) {
-
+    public RpcClient(EventLoopGroup eventLoopGroup) {
+//        this.eventLoopGroup = eventLoopGroup;
+        this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup);
     }
 
     public CommonFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter, CommonFuture rpcFuture) {
