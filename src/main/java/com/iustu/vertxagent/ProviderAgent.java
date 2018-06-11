@@ -37,13 +37,13 @@ public class ProviderAgent {
 
     public void start() throws InterruptedException {
         // TODO: 2018/6/6 配置线程数
-//        EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
+        EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
         rpcClient = new RpcClient(workerGroup);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
-            bootstrap.group(workerGroup, workerGroup)
+            bootstrap.group(eventLoopGroup, workerGroup)
 //                    .channel(NioServerSocketChannel.class)
                     .channel(EpollServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -87,7 +87,7 @@ public class ProviderAgent {
             channelFuture.channel().closeFuture().sync();
         } finally {
             workerGroup.shutdownGracefully();
-//            eventLoopGroup.shutdownGracefully();
+            eventLoopGroup.shutdownGracefully();
             logger.info("server stop");
         }
 
