@@ -78,7 +78,7 @@ public class ConsumerAgent {
 //                                        }
 //                                    }
                                     .addLast("encoder", new HttpResponseEncoder())
-                                    .addLast("decoder", new HttpRequestDecoder(1024, 1024, 1024))
+                                    .addLast("decoder", new HttpRequestDecoder(1024, 1024, 1024, false))
                                     .addLast(new HttpObjectAggregator(4096))
                                     .addLast("handler", new ConsumerInBoundHandler(endpoints, workerGroup));
                         }
