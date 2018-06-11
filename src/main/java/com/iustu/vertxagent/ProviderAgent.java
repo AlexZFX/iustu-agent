@@ -37,6 +37,8 @@ public class ProviderAgent {
 
     public void start() throws InterruptedException {
         // TODO: 2018/6/6 配置线程数
+//        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
+//        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
         rpcClient = new RpcClient(workerGroup);

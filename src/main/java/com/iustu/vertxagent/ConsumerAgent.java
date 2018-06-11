@@ -48,6 +48,8 @@ public class ConsumerAgent {
 //        NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
+//        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
+//        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -82,7 +84,7 @@ public class ConsumerAgent {
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)
-                    .option(ChannelOption.TCP_NODELAY, true)
+//                    .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
                     .childOption(ChannelOption.SO_KEEPALIVE, true)

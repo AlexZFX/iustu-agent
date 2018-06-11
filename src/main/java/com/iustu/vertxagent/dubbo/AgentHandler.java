@@ -24,7 +24,7 @@ public class AgentHandler extends SimpleChannelInboundHandler<AgentResponseProto
         final long requestId = msg.getId();
         final CommonFuture agentFuture = CommonHolder.getAndRemoveFuture(channel, requestId);
         if (agentFuture == null) {
-            logger.error("agentFuture not found", requestId);
+            logger.error("agentFuture not found and RequestId" + requestId);
             throw new IllegalArgumentException("agentFuture not found");
         }
         byte[] bytes = msg.getData().toByteArray();

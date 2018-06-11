@@ -26,6 +26,7 @@ public class AgentConnection extends Connection {
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .channel(EpollSocketChannel.class)
+//                    .channel(NioSocketChannel.class)
                     .handler(new AgentInitializer())
                     .connect(host, port).addListener((ChannelFutureListener) future -> {
                         if (future.isSuccess()) {

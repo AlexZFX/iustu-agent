@@ -1,5 +1,6 @@
 package com.iustu.vertxagent;
 
+import io.netty.util.ResourceLeakDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,7 @@ public class Main {
     public static final String type = System.getProperty("type");
 
     public static void main(String[] args) {
+        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.DISABLED);
         if ("provider".equals(type)) {
             ProviderAgent providerAgent = new ProviderAgent();
             try {

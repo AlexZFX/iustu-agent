@@ -101,7 +101,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         if (agentClient == null) {
             // TODO: 2018/6/9 consumer 线程和连接池大小
             int count = Collections.frequency(endpoints, endpoint);
-            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 6 * count);
+            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 3 * count);
             agentClient = new AgentClient(connectionManager);
             agentClientMap.put(agentKey, agentClient);
         }
@@ -111,7 +111,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
             if (future.isSuccess()) {
                 final byte[] bytes = future.getNow();
                 ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
-                DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer.retain());
+                DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer);
                 HttpHeaders headers = response.headers();
                 headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
                 headers.set(CONTENT_LENGTH, String.valueOf(buffer.readableBytes()));

@@ -19,7 +19,7 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
         final long requestId = response.getRequestId();
         final CommonFuture rpcFuture = CommonHolder.getAndRemoveFuture(channel, requestId);
         if (rpcFuture == null) {
-            logger.error("rpcFuture not found", requestId);
+            logger.error("rpcFuture not found and RequestId = " + requestId);
             throw new IllegalStateException("rpcFuture not found");
         }
         byte[] bytes = response.getBytes();
