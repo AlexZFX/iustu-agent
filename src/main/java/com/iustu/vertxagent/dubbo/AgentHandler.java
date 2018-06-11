@@ -19,12 +19,13 @@ public class AgentHandler extends SimpleChannelInboundHandler<AgentResponseProto
     private static final Logger logger = LoggerFactory.getLogger(AgentHandler.class);
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, AgentResponseProto.AgentResponse msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, AgentResponseProto.AgentResponse msg) {
         final Channel channel = ctx.channel();
         final long requestId = msg.getId();
         final CommonFuture agentFuture = CommonHolder.getAndRemoveFuture(channel, requestId);
         if (agentFuture == null) {
-            logger.error("agentFuture not found");
+            logger.error("agentFuture not found", requestId);
+            throw new IllegalArgumentException("agentFuture not found");
         }
         byte[] bytes = msg.getData().toByteArray();
         agentFuture.trySuccess(bytes);

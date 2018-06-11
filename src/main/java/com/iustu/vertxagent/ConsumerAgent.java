@@ -36,9 +36,6 @@ public class ConsumerAgent {
 
     private final Object lock = new Object();
 
-//    private final  executionHandler = new ExecutionHandler(
-//            new MemoryAwareThreadPoolExecutor(16, 1048576, 1048576));
-
     public void start() throws Exception {
         if (null == endpoints) {
             synchronized (lock) {
@@ -85,6 +82,7 @@ public class ConsumerAgent {
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)
+                    .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
