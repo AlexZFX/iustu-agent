@@ -15,8 +15,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +51,7 @@ public class ConsumerAgent {
 //        NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
-        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
+//        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
@@ -83,7 +81,7 @@ public class ConsumerAgent {
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder())
                                     .addLast(new HttpObjectAggregator(4096))
-                                    .addLast(executors, "handler", new ConsumerInBoundHandler(endpoints, workerGroup));
+                                    .addLast("handler", new ConsumerInBoundHandler(endpoints, workerGroup));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)

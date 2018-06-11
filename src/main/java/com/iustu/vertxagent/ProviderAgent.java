@@ -17,8 +17,6 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +40,7 @@ public class ProviderAgent {
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
         rpcClient = new RpcClient(workerGroup);
-        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
+//        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
@@ -73,7 +71,7 @@ public class ProviderAgent {
                                     .addLast(new ProtobufDecoder(AgentRequestProto.AgentRequest.getDefaultInstance()))
                                     .addLast(new ProtobufVarint32LengthFieldPrepender())
                                     .addLast(new ProtobufEncoder())
-                                    .addLast(executors, new ProviderInBoundHandler(registry, rpcClient));
+                                    .addLast(new ProviderInBoundHandler(registry, rpcClient));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)
