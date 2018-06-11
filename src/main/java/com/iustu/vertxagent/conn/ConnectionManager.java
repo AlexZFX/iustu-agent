@@ -29,18 +29,18 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
 
     // TODO: 2018/6/9 线程数，连接池大小设置
     public ConnectionManager(String host, int port, String type) {
-        this(host, port, type, 4);
+        this(host, port, type, new EpollEventLoopGroup(1));
     }
 
-    public ConnectionManager(String host, int port, String type, int eventLoopGroupSize) {
-        this(host, port, type, eventLoopGroupSize, 4);
+    public ConnectionManager(String host, int port, String type, EventLoopGroup eventLoopGroup) {
+        this(host, port, type, eventLoopGroup, 4);
     }
 
-    public ConnectionManager(String host, int port, String type, int eventLoopGroupSize, int connSize) {
+    public ConnectionManager(String host, int port, String type, EventLoopGroup eventLoopGroup, int connSize) {
         this.host = host;
         this.port = port;
         this.type = type;
-        this.eventLoopGroup = new EpollEventLoopGroup(eventLoopGroupSize);
+        this.eventLoopGroup = eventLoopGroup;
         this.nConns = connSize;
 
     }

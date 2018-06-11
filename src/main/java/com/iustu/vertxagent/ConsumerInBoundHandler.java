@@ -7,6 +7,7 @@ import com.iustu.vertxagent.register.Endpoint;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.Attribute;
@@ -20,7 +21,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
@@ -36,11 +36,11 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
     private static Logger logger = LoggerFactory.getLogger(ConsumerInBoundHandler.class);
 
-    private Random random = new Random();
-
     private List<Endpoint> endpoints = null;
 
     private int endpointSize = 0;
+
+    private EventLoopGroup eventLoopGroup = null;
 
     private final AtomicInteger atomicInteger = new AtomicInteger(0);
 
@@ -49,10 +49,11 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
     private Map<String, AgentClient> agentClientMap = new HashMap<>();
 
-    public ConsumerInBoundHandler(List<Endpoint> endpoints) {
+    public ConsumerInBoundHandler(List<Endpoint> endpoints, EventLoopGroup eventLoopGroup) {
         super();
         this.endpoints = endpoints;
         this.endpointSize = endpoints.size();
+        this.eventLoopGroup = eventLoopGroup;
     }
 
     //读入consumer的请求
@@ -87,8 +88,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 //        }
     }
 
-    public void consumer(Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) throws Exception {
-
+    public void consumer(Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) {
 
         // 简单的负载均衡，随机取一个
         // TODO: 2018/5/31
@@ -99,7 +99,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         AgentClient agentClient = agentClientMap.get(agentKey);
         if (agentClient == null) {
             // TODO: 2018/6/9 consumer 线程和连接池大小 
-            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, 2, 1);
+            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 4);
             agentClient = new AgentClient(connectionManager);
             agentClientMap.put(agentKey, agentClient);
         }

@@ -4,6 +4,7 @@ import com.iustu.vertxagent.register.Endpoint;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -51,7 +52,7 @@ public class ConsumerAgent {
         // TODO: 2018/6/6 配置线程数
 //        NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
-        EventLoopGroup workerGroup = new EpollEventLoopGroup(8);
+        EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
         EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -82,12 +83,12 @@ public class ConsumerAgent {
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder())
                                     .addLast(new HttpObjectAggregator(4096))
-                                    .addLast(executors, "handler", new ConsumerInBoundHandler(endpoints));
+                                    .addLast(executors, "handler", new ConsumerInBoundHandler(endpoints, workerGroup));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)
-//                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-//                    .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
+                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                    .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
                     .childOption(ChannelOption.TCP_NODELAY, true);
             logger.info("server start:" + serverPort);
