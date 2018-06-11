@@ -15,6 +15,7 @@ public class Main {
     public static final String type = System.getProperty("type");
 
     public static void main(String[] args) {
+        //netty自带的内存泄漏检测
         ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.DISABLED);
         if ("provider".equals(type)) {
             ProviderAgent providerAgent = new ProviderAgent();
