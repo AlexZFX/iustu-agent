@@ -1,6 +1,5 @@
 package com.iustu.vertxagent.conn;
 
-import com.iustu.vertxagent.dubbo.RpcClientInitializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -34,7 +33,7 @@ public class RpcClientConnection extends Connection {
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
 //                    .channel(NioSocketChannel.class)
                     .channel(EpollSocketChannel.class)
-                    .handler(new RpcClientInitializer())
+//                    .handler(new RpcClientInitializer())
                     .connect(host, port).addListener((ChannelFutureListener) future -> {
                         if (future.isSuccess()) {
                             channel = future.channel();
