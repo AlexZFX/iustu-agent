@@ -48,13 +48,14 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
     private static final String type = System.getProperty("type");
 
 
-    private Map<String, AgentClient> agentClientMap = new HashMap<>();
+    private Map<String, AgentClient> agentClientMap;
 
     public ConsumerInBoundHandler(List<Endpoint> endpoints, EventLoopGroup eventLoopGroup) {
         super();
         this.endpoints = endpoints;
         this.endpointSize = endpoints.size();
         this.eventLoopGroup = eventLoopGroup;
+        this.agentClientMap = new HashMap<>();
     }
 
     //读入consumer的请求
@@ -101,7 +102,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         if (agentClient == null) {
             // TODO: 2018/6/9 consumer 线程和连接池大小
             int count = Collections.frequency(endpoints, endpoint);
-            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 4 * count);
+            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 3 * count);
             agentClient = new AgentClient(connectionManager);
             agentClientMap.put(agentKey, agentClient);
         }
@@ -120,7 +121,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
             } else if (future.isCancelled()) {
                 logger.error("agentFuture canceled");
             } else {
-                logger.error("agentFuture failed", future.cause().getLocalizedMessage());
+                logger.error("agentFuture failed", future.cause());
             }
         });
 
