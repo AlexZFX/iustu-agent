@@ -39,7 +39,7 @@ public class ProviderAgent {
         // TODO: 2018/6/6 配置线程数
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(2);
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
-        EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(2);
+        EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
         rpcClient = new RpcClient(workerGroup);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
