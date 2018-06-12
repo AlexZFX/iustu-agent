@@ -47,8 +47,8 @@ public class ConsumerAgent {
         // TODO: 2018/6/6 配置线程数
 //        NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
-        EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
-        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
+        EventLoopGroup workerGroup = new EpollEventLoopGroup(8);
+        ((EpollEventLoopGroup) workerGroup).setIoRatio(75);
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
