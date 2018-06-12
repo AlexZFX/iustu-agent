@@ -39,8 +39,10 @@ public class ProviderAgent {
         // TODO: 2018/6/6 配置线程数
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
+//        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
+        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
         rpcClient = new RpcClient(workerGroup);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
