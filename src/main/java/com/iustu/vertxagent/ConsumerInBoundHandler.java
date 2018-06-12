@@ -102,15 +102,15 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         if (agentClient == null) {
             // TODO: 2018/6/9 consumer 线程和连接池大小
             int count = Collections.frequency(endpoints, endpoint);
-            ConnectionManager connectionManager;
-            if (count == 1) {
-                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 4);
-            } else if (count == 2) {
-                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
-            } else {
-                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
-            }
-//            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 3 * count);
+//            ConnectionManager connectionManager;
+//            if (count == 1) {
+//                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 4);
+//            } else if (count == 2) {
+//                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
+//            } else {
+//                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
+//            }
+            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 3 * count);
             agentClient = new AgentClient(connectionManager);
             agentClientMap.put(agentKey, agentClient);
         }

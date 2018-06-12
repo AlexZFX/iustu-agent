@@ -49,6 +49,7 @@ public class ConsumerAgent {
 //        NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
+        ((EpollEventLoopGroup) workerGroup).setIoRatio(80);
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);

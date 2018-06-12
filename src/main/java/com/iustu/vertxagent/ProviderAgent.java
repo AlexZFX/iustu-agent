@@ -41,6 +41,7 @@ public class ProviderAgent {
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
+        ((EpollEventLoopGroup) workerGroup).setIoRatio(80);
         rpcClient = new RpcClient(workerGroup);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
