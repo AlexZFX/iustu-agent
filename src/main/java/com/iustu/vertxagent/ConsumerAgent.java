@@ -61,7 +61,7 @@ public class ConsumerAgent {
                 Set<Endpoint> endpointSet = new HashSet<>(endpoints);
                 for (Endpoint endpoint : endpointSet) {
                     count = Collections.frequency(endpoints, endpoint);
-                    ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, workerGroup, 10 * count);
+                    ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, workerGroup, 20 * count);
                     AgentClient client = new AgentClient(connectionManager);
                     agentClientMap.put(endpoint.getHost() + endpoint.getPort(), client);
                 }
@@ -78,7 +78,7 @@ public class ConsumerAgent {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
-                            logger.info("server accept channel: " + ch.id());
+//                            logger.info("server accept channel: " + ch.id());
 
                             ch.pipeline()
 //                                    .addLast(new ChannelDuplexHandler() {

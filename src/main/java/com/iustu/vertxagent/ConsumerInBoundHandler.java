@@ -37,7 +37,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
     private int endpointSize = 0;
 
-    private EventLoopGroup eventLoopGroup = null;
+//    private EventLoopGroup eventLoopGroup = null;
 
 //    private final AtomicInteger atomicInteger = new AtomicInteger(0);
 
@@ -52,7 +52,6 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         this.endpoints = endpoints;
         this.endpointSize = endpoints.size();
 //        this.eventLoopGroup = eventLoopGroup;
-        this.eventLoopGroup = eventLoopGroup;
 //        this.eventLoopGroup = new NioEventLoopGroup(8);
         this.agentClientMap = agentClientMap;
     }
