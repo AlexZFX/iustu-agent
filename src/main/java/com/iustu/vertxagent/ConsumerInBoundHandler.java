@@ -112,7 +112,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 //            } else {
 //                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
 //            }
-            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8 * count);
+            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 4 * count);
             agentClient = new AgentClient(connectionManager);
             agentClientMap.put(agentKey, agentClient);
         }
