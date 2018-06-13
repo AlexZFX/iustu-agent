@@ -9,7 +9,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
@@ -56,7 +55,8 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         this.endpoints = endpoints;
         this.endpointSize = endpoints.size();
 //        this.eventLoopGroup = eventLoopGroup;
-        this.eventLoopGroup = new EpollEventLoopGroup(8);
+        this.eventLoopGroup = eventLoopGroup;
+//        this.eventLoopGroup = new NioEventLoopGroup(8);
         this.agentClientMap = new HashMap<>();
     }
 
