@@ -47,6 +47,7 @@ public class ProviderAgent {
 //        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
         rpcClient = new RpcClient(workerGroup);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
+        ProviderInBoundHandler providerInBoundHandler = new ProviderInBoundHandler(registry, rpcClient);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
@@ -54,7 +55,7 @@ public class ProviderAgent {
                     .channel(EpollServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
+                        protected void initChannel(SocketChannel ch) {
                             ch.pipeline()
 //                                    .addLast(new ChannelDuplexHandler() {
 //                                        @Override
@@ -77,7 +78,7 @@ public class ProviderAgent {
                                     .addLast(new ProtobufDecoder(AgentRequestProto.AgentRequest.getDefaultInstance()))
                                     .addLast(new ProtobufVarint32LengthFieldPrepender())
                                     .addLast(new ProtobufEncoder())
-                                    .addLast(new ProviderInBoundHandler(registry, rpcClient));
+                                    .addLast(providerInBoundHandler);
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)

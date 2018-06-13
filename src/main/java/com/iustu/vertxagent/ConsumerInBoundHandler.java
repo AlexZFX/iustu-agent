@@ -6,10 +6,7 @@ import com.iustu.vertxagent.dubbo.model.CommonFuture;
 import com.iustu.vertxagent.register.Endpoint;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
@@ -32,6 +29,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
  * Date : 2018/6/6 10:13
  * Description :
  */
+@ChannelHandler.Sharable
 public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
 

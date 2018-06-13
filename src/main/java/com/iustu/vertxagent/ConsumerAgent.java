@@ -53,6 +53,8 @@ public class ConsumerAgent {
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(8);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
+        ConsumerInBoundHandler consumerInBoundHandler = new ConsumerInBoundHandler(endpoints, workerGroup);
+
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
@@ -82,7 +84,7 @@ public class ConsumerAgent {
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder(1024, 1024, 1024, false))
                                     .addLast(new HttpObjectAggregator(2048))
-                                    .addLast("handler", new ConsumerInBoundHandler(endpoints, workerGroup));
+                                    .addLast("handler", consumerInBoundHandler);
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)

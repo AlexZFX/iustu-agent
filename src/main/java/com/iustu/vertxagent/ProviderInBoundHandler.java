@@ -7,6 +7,7 @@ import com.iustu.vertxagent.dubbo.model.AgentResponseProto;
 import com.iustu.vertxagent.dubbo.model.CommonFuture;
 import com.iustu.vertxagent.register.IRegistry;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
  * Date : 2018/6/7 19:08
  * Description :
  */
+@ChannelHandler.Sharable
 public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentRequestProto.AgentRequest> {
 
     private static Logger logger = LoggerFactory.getLogger(ConsumerInBoundHandler.class);
@@ -35,7 +37,7 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, AgentRequestProto.AgentRequest msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, AgentRequestProto.AgentRequest msg) {
         long requestId = msg.getId();
         String interfaceName = msg.getInterfaceName();
         String method = msg.getMethod();
