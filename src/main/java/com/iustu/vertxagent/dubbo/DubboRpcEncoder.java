@@ -1,6 +1,5 @@
 package com.iustu.vertxagent.dubbo;
 
-import com.iustu.vertxagent.dubbo.model.Bytes;
 import com.iustu.vertxagent.dubbo.model.JsonUtils;
 import com.iustu.vertxagent.dubbo.model.Request;
 import com.iustu.vertxagent.dubbo.model.RpcInvocation;
@@ -27,34 +26,55 @@ public class DubboRpcEncoder extends MessageToByteEncoder {
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
         Request req = (Request) msg;
 
-        // header.
-        byte[] header = new byte[HEADER_LENGTH];
-        // set magic number.
-        Bytes.short2bytes(MAGIC, header);
+//        // header.
+//        byte[] header = new byte[HEADER_LENGTH];
+//        // set magic number.
+//        Bytes.short2bytes(MAGIC, header);
+//
+//        // set request and serialization flag.
+//        header[2] = (byte) (FLAG_REQUEST | 6);
+//
+//        if (req.isTwoWay()) header[2] |= FLAG_TWOWAY;
+//        if (req.isEvent()) header[2] |= FLAG_EVENT;
+//
+//        // set request id.
+//        Bytes.long2bytes(req.getId(), header, 4);
+//
+//        // encode request data.
+//        int savedWriteIndex = buffer.writerIndex();
+//        buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
+//        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//        encodeRequestData(bos, req.getData());
+//
+//        int len = bos.size();
+//        buffer.writeBytes(bos.toByteArray());
+//        Bytes.int2bytes(len, header, 12);
+//
+//        // write
+//        buffer.writerIndex(savedWriteIndex);
+//        buffer.writeBytes(header); // write header.
+//        buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
+//    }
+//
+//    private ByteBuf encode(Request req, ByteBuf buffer) throws Exception {
+        byte flag = FLAG_REQUEST | 6;
+        if (req.isTwoWay()) {
+            flag |= FLAG_TWOWAY;
+        }
+        if (req.isEvent()) {
+            flag |= FLAG_EVENT;
+        }
 
-        // set request and serialization flag.
-        header[2] = (byte) (FLAG_REQUEST | 6);
-
-        if (req.isTwoWay()) header[2] |= FLAG_TWOWAY;
-        if (req.isEvent()) header[2] |= FLAG_EVENT;
-
-        // set request id.
-        Bytes.long2bytes(req.getId(), header, 4);
-
-        // encode request data.
-        int savedWriteIndex = buffer.writerIndex();
-        buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         encodeRequestData(bos, req.getData());
+        int dataLen = bos.size();
 
-        int len = bos.size();
-        buffer.writeBytes(bos.toByteArray());
-        Bytes.int2bytes(len, header, 12);
-
-        // write
-        buffer.writerIndex(savedWriteIndex);
-        buffer.writeBytes(header); // write header.
-        buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
+        buffer.writeShort(MAGIC)
+                .writeByte(flag)
+                .writeZero(1)
+                .writeLong(req.getId())
+                .writeInt(dataLen)
+                .writeBytes(bos.toByteArray());
     }
 
     public void encodeRequestData(OutputStream out, Object data) throws Exception {

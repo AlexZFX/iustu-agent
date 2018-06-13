@@ -38,7 +38,7 @@ public class ProviderAgent {
     public void start() throws InterruptedException {
         // TODO: 2018/6/6 配置线程数
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
-//        EventLoopGroup workerGroup = new NioEventLoopGroup(8);
+//        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
 //        EventLoopGroup providerWorkerGroup = new NioEventLoopGroup(8);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);

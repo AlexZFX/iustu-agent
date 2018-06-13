@@ -3,7 +3,7 @@ package com.iustu.vertxagent.dubbo.model;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.EventExecutor;
 
-public class CommonFuture extends DefaultPromise<byte[]> {
+public class CommonFuture extends DefaultPromise<Object> {
     public CommonFuture(EventExecutor executor) {
         super(executor);
     }

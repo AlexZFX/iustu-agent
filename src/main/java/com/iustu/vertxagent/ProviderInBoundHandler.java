@@ -6,10 +6,12 @@ import com.iustu.vertxagent.dubbo.model.AgentRequestProto;
 import com.iustu.vertxagent.dubbo.model.AgentResponseProto;
 import com.iustu.vertxagent.dubbo.model.CommonFuture;
 import com.iustu.vertxagent.register.IRegistry;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,12 +56,22 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
             if (future.isCancelled()) {
                 logger.warn("rpcFuture cancelled");
             } else if (future.isSuccess()) {
-                final byte[] bytes = future.getNow();
+                ByteBuf payload = ((ByteBuf) future.getNow());
 //                logger.info("receive provider response: " + new String(bytes));
+                final ByteString bytes;
+                if (payload.hasArray()) {
+                    bytes = ByteString.copyFrom(payload.array());
+                } else {
+                    bytes = ByteString.copyFrom(payload.nioBuffer());
+                }
+
+                if (requestId == 0 || requestId == 1) {
+                    logger.error("provider agent requestId == " + requestId);
+                }
                 AgentResponseProto.AgentResponse response = AgentResponseProto.AgentResponse
                         .newBuilder()
                         .setId(requestId)
-                        .setData(ByteString.copyFrom(bytes))
+                        .setData(bytes)
                         .build();
 //                if (channel.isActive()) {
 //                ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
@@ -67,7 +79,7 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
 //                HttpHeaders headers = response.headers();
 //                headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
 //                headers.set(CONTENT_LENGTH, String.valueOf(bytes.length));
-                channel.writeAndFlush(response)
+                channel.writeAndFlush(response).addListener(future1 -> ReferenceCountUtil.safeRelease(payload))
 //                        .addListener((ChannelFutureListener) future1 -> {
 //                            if (future1.isSuccess()) {
 //                                logger.info("provider write done");
@@ -83,8 +95,6 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
             }
         });
     }
-
-
 
 
 }

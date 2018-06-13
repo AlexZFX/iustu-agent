@@ -24,6 +24,8 @@ public class RpcClient {
 
     private static final String type = System.getProperty("type");
 
+    private static final String size = System.getProperty("size");
+
 //    private final EventLoopGroup eventLoopGroup;
 
     // TODO: 2018/6/9 provider 线程数和连接池大小 
@@ -31,7 +33,13 @@ public class RpcClient {
 
     public RpcClient(EventLoopGroup eventLoopGroup) {
 //        this.eventLoopGroup = eventLoopGroup;
-        this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup);
+        if ("large".equals(size)) {
+            this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup, 16);
+        } else if ("medium".equals(size)) {
+            this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup, 12);
+        } else {
+            this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup);
+        }
     }
 
     public CommonFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter, CommonFuture rpcFuture) {

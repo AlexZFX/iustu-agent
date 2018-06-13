@@ -10,7 +10,7 @@ import io.netty.channel.ChannelFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Author : Alex
@@ -23,7 +23,7 @@ public class AgentClient {
 
     private final ConnectionManager connectionManager;
 
-    private static final AtomicInteger atomicInteger = new AtomicInteger(0);
+    private static final AtomicLong atomicLong = new AtomicLong(0);
 
     public AgentClient(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
@@ -31,7 +31,10 @@ public class AgentClient {
 
     public CommonFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter, CommonFuture agentFuture) {
         final ChannelFuture channelFuture = connectionManager.getChannelFuture();
-        long requestId = atomicInteger.getAndIncrement();
+        long requestId = atomicLong.getAndIncrement();
+        if (requestId < 10) {
+            logger.error("atomicLong requestId == " + requestId);
+        }
         if (channelFuture.isSuccess()) {
             Channel channel = channelFuture.channel();
             sendAgentRequest(channel, agentFuture, requestId, interfaceName, method, parameterTypesString, parameter);

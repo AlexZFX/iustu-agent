@@ -1,5 +1,6 @@
 package com.iustu.vertxagent;
 
+import com.iustu.vertxagent.dubbo.AgentClient;
 import com.iustu.vertxagent.register.Endpoint;
 import com.iustu.vertxagent.register.EtcdRegistry;
 import com.iustu.vertxagent.register.IRegistry;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Author : Alex
@@ -34,6 +36,8 @@ public class ConsumerAgent {
 
     private List<Endpoint> endpoints = null;
 
+    private Map<String, AgentClient> agentClientMap = null;
+
     private final Object lock = new Object();
 
     public void start() throws Exception {
@@ -42,15 +46,17 @@ public class ConsumerAgent {
                 if (null == endpoints) {
                     endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
                 }
+
             }
         }
+
         // TODO: 2018/6/6 配置线程数
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
 //        EventLoopGroup consumerWorkerGroup = new EpollEventLoopGroup(8);
 //        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
-//        EventLoopGroup workerGroup = new NioEventLoopGroup(8);
+//        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         ConsumerInBoundHandler consumerInBoundHandler = new ConsumerInBoundHandler(endpoints, workerGroup);
@@ -63,6 +69,8 @@ public class ConsumerAgent {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
+                            logger.info("server accept channel: " + ch.id());
+
                             ch.pipeline()
 //                                    .addLast(new ChannelDuplexHandler() {
 //                                        @Override
@@ -92,7 +100,8 @@ public class ConsumerAgent {
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
-                    .childOption(ChannelOption.TCP_NODELAY, true);
+                    .childOption(ChannelOption.TCP_NODELAY, true)
+            ;
             logger.info("server start:" + serverPort);
             //绑定端口，开始接受进来的连接
             ChannelFuture channelFuture = bootstrap.bind(serverPort).sync();

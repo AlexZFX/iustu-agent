@@ -112,7 +112,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 //            } else {
 //                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
 //            }
-            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 3 * count);
+            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8 * count);
             agentClient = new AgentClient(connectionManager);
             agentClientMap.put(agentKey, agentClient);
         }
@@ -120,8 +120,11 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         agentClient.invoke(interfaceName, method, parameterTypesString, parameter, agentFuture);
         agentFuture.addListener((GenericFutureListener<CommonFuture>) future -> {
             if (future.isSuccess()) {
-                final byte[] bytes = future.getNow();
+//                ByteBufHolder byteBufHolder = future.getNow();
+//                ByteBuf payload = byteBufHolder.content();
+//                final byte[] bytes = (byte[]) byteBufHolder;
 //                ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
+                byte[] bytes = (byte[]) future.getNow();
                 ByteBuf buffer = Unpooled.wrappedBuffer(bytes);
                 DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer);
                 HttpHeaders headers = response.headers();
