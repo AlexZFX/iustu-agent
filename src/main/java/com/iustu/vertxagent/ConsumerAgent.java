@@ -46,9 +46,9 @@ public class ConsumerAgent {
         }
         // TODO: 2018/6/6 配置线程数
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
-        EventLoopGroup workerGroup = new EpollEventLoopGroup(8);
-        EventLoopGroup consumerWorkerGroup = new EpollEventLoopGroup(8);
-        ((EpollEventLoopGroup) workerGroup).setIoRatio(75);
+        EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
+//        EventLoopGroup consumerWorkerGroup = new EpollEventLoopGroup(8);
+        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(8);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
@@ -82,7 +82,7 @@ public class ConsumerAgent {
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder(1024, 1024, 1024, false))
                                     .addLast(new HttpObjectAggregator(4096))
-                                    .addLast("handler", new ConsumerInBoundHandler(endpoints, consumerWorkerGroup));
+                                    .addLast("handler", new ConsumerInBoundHandler(endpoints, workerGroup));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)

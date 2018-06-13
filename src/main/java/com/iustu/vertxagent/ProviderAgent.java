@@ -42,10 +42,10 @@ public class ProviderAgent {
 //        EventLoopGroup providerWorkerGroup = new NioEventLoopGroup(8);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
-        EventLoopGroup workerGroup = new EpollEventLoopGroup(8);
-        EventLoopGroup providerWorkerGroup = new EpollEventLoopGroup(8);
-        ((EpollEventLoopGroup) workerGroup).setIoRatio(75);
-        rpcClient = new RpcClient(providerWorkerGroup);
+        EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
+//        EventLoopGroup providerWorkerGroup = new EpollEventLoopGroup(8);
+        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
+        rpcClient = new RpcClient(workerGroup);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();

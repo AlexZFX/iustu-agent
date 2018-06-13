@@ -37,10 +37,10 @@ public class CommonHolder {
 //        return futureMap.remove(requestId);
         Attribute<Map<Long, CommonFuture>> attr = channel.attr(rpcFutureMapKey);
         Map<Long, CommonFuture> futureMap = attr.get();
-        if (futureMap == null) {
-            futureMap = new HashMap<>();
-            attr.setIfAbsent(futureMap);
-        }
+//        if (futureMap == null) {
+//            futureMap = new HashMap<>();
+//            attr.setIfAbsent(futureMap);
+//        }
         return futureMap.remove(requestId);
     }
 }
