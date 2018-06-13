@@ -1,6 +1,5 @@
 package com.iustu.vertxagent;
 
-import com.iustu.vertxagent.conn.ConnectionManager;
 import com.iustu.vertxagent.dubbo.AgentClient;
 import com.iustu.vertxagent.dubbo.model.CommonFuture;
 import com.iustu.vertxagent.register.Endpoint;
@@ -16,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,20 +41,20 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
 //    private final AtomicInteger atomicInteger = new AtomicInteger(0);
 
-    private static final String type = System.getProperty("type");
+//    private static final String type = System.getProperty("type");
 
 
     private Map<String, AgentClient> agentClientMap;
     private int connIndex = 0;
 
-    public ConsumerInBoundHandler(List<Endpoint> endpoints, EventLoopGroup eventLoopGroup) {
+    public ConsumerInBoundHandler(List<Endpoint> endpoints, Map<String, AgentClient> agentClientMap, EventLoopGroup eventLoopGroup) {
         super();
         this.endpoints = endpoints;
         this.endpointSize = endpoints.size();
 //        this.eventLoopGroup = eventLoopGroup;
         this.eventLoopGroup = eventLoopGroup;
 //        this.eventLoopGroup = new NioEventLoopGroup(8);
-        this.agentClientMap = new HashMap<>();
+        this.agentClientMap = agentClientMap;
     }
 
     //读入consumer的请求
@@ -101,21 +99,20 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
         String agentKey = endpoint.getHost() + endpoint.getPort();
         AgentClient agentClient = agentClientMap.get(agentKey);
-        if (agentClient == null) {
-            // TODO: 2018/6/9 consumer 线程和连接池大小
-            int count = Collections.frequency(endpoints, endpoint);
-//            ConnectionManager connectionManager;
-//            if (count == 1) {
-//                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 4);
-//            } else if (count == 2) {
-//                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
-//            } else {
-//                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
-//            }
-            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 4 * count);
-            agentClient = new AgentClient(connectionManager);
-            agentClientMap.put(agentKey, agentClient);
-        }
+//        if (agentClient == null) {
+//            int count = Collections.frequency(endpoints, endpoint);
+////            ConnectionManager connectionManager;
+////            if (count == 1) {
+////                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 4);
+////            } else if (count == 2) {
+////                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
+////            } else {
+////                connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 8);
+////            }
+//            ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, eventLoopGroup, 10 * count);
+//            agentClient = new AgentClient(connectionManager);
+//            agentClientMap.put(agentKey, agentClient);
+//        }
         CommonFuture agentFuture = new CommonFuture(channel.eventLoop());
         agentClient.invoke(interfaceName, method, parameterTypesString, parameter, agentFuture);
         agentFuture.addListener((GenericFutureListener<CommonFuture>) future -> {

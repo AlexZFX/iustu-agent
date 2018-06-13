@@ -33,13 +33,13 @@ public class RpcClient {
 
     public RpcClient(EventLoopGroup eventLoopGroup) {
 //        this.eventLoopGroup = eventLoopGroup;
-//        if ("large".equals(size)) {
-//            this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup, 16);
-//        } else if ("medium".equals(size)) {
-//            this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup, 12);
-//        } else {
+        if ("large".equals(size)) {
+            this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup, 16);
+        } else if ("medium".equals(size)) {
+            this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup, 12);
+        } else {
             this.connectManager = new ConnectionManager(host, port, type, eventLoopGroup);
-//        }
+        }
     }
 
     public CommonFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter, CommonFuture rpcFuture) {

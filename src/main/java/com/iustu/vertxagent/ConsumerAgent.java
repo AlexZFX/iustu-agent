@@ -1,5 +1,6 @@
 package com.iustu.vertxagent;
 
+import com.iustu.vertxagent.conn.ConnectionManager;
 import com.iustu.vertxagent.dubbo.AgentClient;
 import com.iustu.vertxagent.register.Endpoint;
 import com.iustu.vertxagent.register.EtcdRegistry;
@@ -19,8 +20,7 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Author : Alex
@@ -34,22 +34,15 @@ public class ConsumerAgent {
 
     private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
+    private static final String type = System.getProperty("type");
+
     private List<Endpoint> endpoints = null;
 
-    private Map<String, AgentClient> agentClientMap = null;
+    private Map<String, AgentClient> agentClientMap = new HashMap<>();
 
     private final Object lock = new Object();
 
     public void start() throws Exception {
-        if (null == endpoints) {
-            synchronized (lock) {
-                if (null == endpoints) {
-                    endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
-                }
-
-            }
-        }
-
         // TODO: 2018/6/6 配置线程数
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
@@ -58,8 +51,24 @@ public class ConsumerAgent {
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
-//        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
-        ConsumerInBoundHandler consumerInBoundHandler = new ConsumerInBoundHandler(endpoints, workerGroup);
+//
+        if (null == endpoints) {
+            synchronized (lock) {
+                if (null == endpoints) {
+                    endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
+                }
+                int count;
+                Set<Endpoint> endpointSet = new HashSet<>(endpoints);
+                for (Endpoint endpoint : endpointSet) {
+                    count = Collections.frequency(endpoints, endpoint);
+                    ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, workerGroup, 10 * count);
+                    AgentClient client = new AgentClient(connectionManager);
+                    agentClientMap.put(endpoint.getHost() + endpoint.getPort(), client);
+                }
+            }
+        }
+//       EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
+        ConsumerInBoundHandler consumerInBoundHandler = new ConsumerInBoundHandler(endpoints, agentClientMap, workerGroup);
 
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
