@@ -5,6 +5,7 @@ import com.iustu.vertxagent.dubbo.AgentClient;
 import com.iustu.vertxagent.dubbo.model.CommonFuture;
 import com.iustu.vertxagent.register.Endpoint;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
@@ -122,7 +123,8 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         agentFuture.addListener((GenericFutureListener<CommonFuture>) future -> {
             if (future.isSuccess()) {
                 final byte[] bytes = future.getNow();
-                ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
+//                ByteBuf buffer = channel.alloc().buffer(bytes.length).writeBytes(bytes);
+                ByteBuf buffer = Unpooled.wrappedBuffer(bytes);
                 DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer);
                 HttpHeaders headers = response.headers();
                 headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");

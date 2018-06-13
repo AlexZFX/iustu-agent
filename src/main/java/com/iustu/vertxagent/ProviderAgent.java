@@ -44,7 +44,7 @@ public class ProviderAgent {
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
 //        EventLoopGroup providerWorkerGroup = new EpollEventLoopGroup(8);
-        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
+//        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
         rpcClient = new RpcClient(workerGroup);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         try {
