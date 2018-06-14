@@ -6,6 +6,7 @@ import io.netty.channel.epoll.EpollEventLoopGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConnectionManager implements RpcClientConnection.OnConnectionListener {
 
@@ -14,8 +15,8 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
 
     private final int nConns;
 
-    //    private AtomicInteger connIndex = new AtomicInteger(0);
-    private int connIndex = 0;
+    private final AtomicInteger connIndex = new AtomicInteger(0);
+//    private int connIndex = 0;
 
 //    private Random random = new Random();
 
@@ -53,8 +54,8 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
     public ChannelFuture getChannelFuture() {
         try {
             if (conns.size() == nConns) {
-                return conns.get(connIndex++ % nConns).connectChannel();
-//                return conns.get(connIndex.getAndIncrement() % nConns).connectChannel();
+//                return conns.get(connIndex++ % nConns).connectChannel();
+                return conns.get(connIndex.getAndIncrement() % nConns).connectChannel();
             }
         } catch (IndexOutOfBoundsException e) {
             e.printStackTrace();
@@ -74,8 +75,8 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
                 }
 
 //                return conns.get(random.nextInt(conns.size())).connectChannel();
-                return conns.get(connIndex++ % conns.size()).connectChannel();
-//                return conns.get(connIndex.getAndIncrement() % conns.size()).connectChannel();
+//                return conns.get(connIndex++ % conns.size()).connectChannel();
+                return conns.get(connIndex.getAndIncrement() % conns.size()).connectChannel();
             }
         }
     }
