@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Author : Alex
@@ -38,9 +39,13 @@ public class ConsumerAgent {
 
     private List<Endpoint> endpoints = null;
 
-    private Map<String, AgentClient> agentClientMap = new HashMap<>();
+//    private Map<String, AgentClient> agentClientMap = new HashMap<>();
+
+    private List<AgentClient> agentClientList = new ArrayList<>();
 
     private final Object lock = new Object();
+
+    private final AtomicInteger atomicInteger = new AtomicInteger(0);
 
     public void start() throws Exception {
         // TODO: 2018/6/6 配置线程数
@@ -61,15 +66,17 @@ public class ConsumerAgent {
                 Set<Endpoint> endpointSet = new HashSet<>(endpoints);
                 for (Endpoint endpoint : endpointSet) {
                     count = Collections.frequency(endpoints, endpoint);
-                    ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, workerGroup, 8 * count);
+                    ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, workerGroup, 2 * count);
                     AgentClient client = new AgentClient(connectionManager);
-                    agentClientMap.put(endpoint.getHost() + endpoint.getPort(), client);
+                    agentClientList.add(client);
+//                    agentClientMap.put(endpoint.getHost() + endpoint.getPort(), client);
                 }
             }
         }
+        int size = agentClientList.size();
 //       EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
-        ConsumerInBoundHandler consumerInBoundHandler = new ConsumerInBoundHandler(endpoints, agentClientMap, workerGroup);
-
+//        ConsumerInBoundHandler consumerInBoundHandler = new ConsumerInBoundHandler(endpoints, agentClientMap, workerGroup);
+//        ConsumerInBoundHandler consumerInBoundHandler = new ConsumerInBoundHandler(agentClientList.get(atomicInteger.getAndIncrement() % size));
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
@@ -101,7 +108,7 @@ public class ConsumerAgent {
                                     .addLast("encoder", new HttpResponseEncoder())
                                     .addLast("decoder", new HttpRequestDecoder(1024, 1024, 1024, false))
                                     .addLast(new HttpObjectAggregator(2048))
-                                    .addLast("handler", consumerInBoundHandler);
+                                    .addLast("handler", new ConsumerInBoundHandler(agentClientList.get(atomicInteger.getAndIncrement() % size)));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)

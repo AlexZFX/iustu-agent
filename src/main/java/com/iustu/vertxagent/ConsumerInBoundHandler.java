@@ -2,10 +2,11 @@ package com.iustu.vertxagent;
 
 import com.iustu.vertxagent.dubbo.AgentClient;
 import com.iustu.vertxagent.dubbo.model.CommonFuture;
-import com.iustu.vertxagent.register.Endpoint;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
@@ -27,15 +28,15 @@ import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
  * Date : 2018/6/6 10:13
  * Description :
  */
-@ChannelHandler.Sharable
+//@ChannelHandler.Sharable
 public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
 
     private static Logger logger = LoggerFactory.getLogger(ConsumerInBoundHandler.class);
 
-    private List<Endpoint> endpoints = null;
-
-    private int endpointSize = 0;
+//    private List<Endpoint> endpoints = null;
+//
+//    private int endpointSize = 0;
 
 //    private EventLoopGroup eventLoopGroup = null;
 
@@ -43,18 +44,23 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 
 //    private static final String type = System.getProperty("type");
 
+    private AgentClient agentClient;
 
-    private Map<String, AgentClient> agentClientMap;
-    private int connIndex = 0;
+//    private Map<String, AgentClient> agentClientMap;
+//    private int connIndex = 0;
 
-    public ConsumerInBoundHandler(List<Endpoint> endpoints, Map<String, AgentClient> agentClientMap, EventLoopGroup eventLoopGroup) {
-        super();
-        this.endpoints = endpoints;
-        this.endpointSize = endpoints.size();
-//        this.eventLoopGroup = eventLoopGroup;
-//        this.eventLoopGroup = new NioEventLoopGroup(8);
-        this.agentClientMap = agentClientMap;
+    public ConsumerInBoundHandler(AgentClient agentClient) {
+        this.agentClient = agentClient;
     }
+
+//    public ConsumerInBoundHandler(List<Endpoint> endpoints, Map<String, AgentClient> agentClientMap, EventLoopGroup eventLoopGroup) {
+//        super();
+//        this.endpoints = endpoints;
+//        this.endpointSize = endpoints.size();
+////        this.eventLoopGroup = eventLoopGroup;
+////        this.eventLoopGroup = new NioEventLoopGroup(8);
+//        this.agentClientMap = agentClientMap;
+//    }
 
     //读入consumer的请求
     @Override
@@ -94,10 +100,10 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
         // TODO: 2018/5/31
 //        Endpoint endpoint = endpoints.get(random.nextInt(endpoints.size()));
 //        Endpoint endpoint = endpoints.get(atomicInteger.getAndIncrement() % endpointSize);
-        Endpoint endpoint = endpoints.get(connIndex++ % endpointSize);
+//        Endpoint endpoint = endpoints.get(connIndex++ % endpointSize);
 
-        String agentKey = endpoint.getHost() + endpoint.getPort();
-        AgentClient agentClient = agentClientMap.get(agentKey);
+//        String agentKey = endpoint.getHost() + endpoint.getPort();
+//        AgentClient agentClient = agentClientMap.get(agentKey);
 //        if (agentClient == null) {
 //            int count = Collections.frequency(endpoints, endpoint);
 ////            ConnectionManager connectionManager;
