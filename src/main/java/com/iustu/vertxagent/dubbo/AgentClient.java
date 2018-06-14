@@ -32,9 +32,9 @@ public class AgentClient {
     public CommonFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter, CommonFuture agentFuture) {
         final ChannelFuture channelFuture = connectionManager.getChannelFuture();
         long requestId = atomicLong.getAndIncrement();
-        if (requestId < 10) {
-            logger.error("atomicLong requestId == " + requestId);
-        }
+//        if (requestId < 10) {
+//            logger.error("atomicLong requestId == " + requestId);
+//        }
         if (channelFuture.isSuccess()) {
             Channel channel = channelFuture.channel();
             sendAgentRequest(channel, agentFuture, requestId, interfaceName, method, parameterTypesString, parameter);

@@ -21,6 +21,10 @@ public class Request {
         id = atomicLong.getAndIncrement();
     }
 
+    public Request(long requestId) {
+        id = requestId;
+    }
+
     public long getId() {
         return id;
     }

@@ -42,11 +42,11 @@ public class RpcClient {
         }
     }
 
-    public CommonFuture invoke(String interfaceName, String method, String parameterTypesString, String parameter, CommonFuture rpcFuture) {
+    public CommonFuture invoke(long requestId, String interfaceName, String parameterTypesString, String parameter, CommonFuture rpcFuture, String method) {
         final ChannelFuture channelFuture = connectManager.getChannelFuture();
         if (channelFuture.isSuccess()) {
             Channel channel = channelFuture.channel();
-            sendRequest(rpcFuture, channel, interfaceName, method, parameterTypesString, parameter);
+            sendRequest(rpcFuture, channel, requestId, method, parameterTypesString, parameter, interfaceName);
             return rpcFuture;
         }
 
@@ -55,7 +55,7 @@ public class RpcClient {
                 rpcFuture.cancel(false);
             } else if (future.isSuccess()) {
                 Channel channel = future.channel();
-                sendRequest(rpcFuture, channel, interfaceName, method, parameterTypesString, parameter);
+                sendRequest(rpcFuture, channel, requestId, method, parameterTypesString, parameter, interfaceName);
             } else {
                 rpcFuture.tryFailure(future.cause());
             }
@@ -64,9 +64,9 @@ public class RpcClient {
         return rpcFuture;
     }
 
-    private void sendRequest(CommonFuture rpcFuture, Channel channel, String interfaceName, String method, String parameterTypesString, String parameter) {
+    private void sendRequest(CommonFuture rpcFuture, Channel channel, long requestId, String method, String parameterTypesString, String parameter, String interfaceName) {
         try {
-            final Request request = createRequest(interfaceName, method, parameterTypesString, parameter);
+            final Request request = createRequest(requestId, interfaceName, method, parameterTypesString, parameter);
             channel.writeAndFlush(request).addListener((ChannelFutureListener) writeFuture -> {
                 if (writeFuture.isCancelled()) {
                     rpcFuture.cancel(false);
@@ -81,7 +81,7 @@ public class RpcClient {
         }
     }
 
-    private Request createRequest(String interfaceName, String method, String parameterTypesString, String parameter) throws IOException {
+    private Request createRequest(long requestId, String interfaceName, String method, String parameterTypesString, String parameter) throws IOException {
         RpcInvocation invocation = new RpcInvocation();
         invocation.setMethodName(method);
         invocation.setAttachment("path", interfaceName);
@@ -92,7 +92,7 @@ public class RpcClient {
         JsonUtils.writeObject(parameter, writer);
         invocation.setArguments(out.toByteArray());
 
-        Request request = new Request();
+        Request request = new Request(requestId);
         request.setVersion("2.0.0");
         request.setTwoWay(true);
         request.setData(invocation);

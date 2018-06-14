@@ -51,7 +51,7 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
 
     public void provider(Channel channel, long requestId, String interfaceName, String method, String parameterTypesString, String parameter) {
         CommonFuture rpcFuture = new CommonFuture(channel.eventLoop());
-        rpcClient.invoke(interfaceName, method, parameterTypesString, parameter, rpcFuture);
+        rpcClient.invoke(requestId, interfaceName, parameterTypesString, parameter, rpcFuture, method);
         rpcFuture.addListener((GenericFutureListener<CommonFuture>) future -> {
             if (future.isCancelled()) {
                 logger.warn("rpcFuture cancelled");
@@ -65,9 +65,9 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
                     bytes = ByteString.copyFrom(payload.nioBuffer());
                 }
 
-                if (requestId == 0 || requestId == 1) {
-                    logger.error("provider agent requestId == " + requestId);
-                }
+//                if (requestId == 0 || requestId == 1) {
+//                    logger.error("provider agent requestId == " + requestId);
+//                }
                 AgentResponseProto.AgentResponse response = AgentResponseProto.AgentResponse
                         .newBuilder()
                         .setId(requestId)
