@@ -56,7 +56,7 @@ public class ProviderInBoundHandler extends SimpleChannelInboundHandler<AgentReq
             if (future.isCancelled()) {
                 logger.warn("rpcFuture cancelled");
             } else if (future.isSuccess()) {
-                ByteBuf payload = ((ByteBuf) future.getNow());
+                ByteBuf payload = (ByteBuf) future.getNow();
 //                logger.info("receive provider response: " + new String(bytes));
                 final ByteString bytes;
                 if (payload.hasArray()) {
