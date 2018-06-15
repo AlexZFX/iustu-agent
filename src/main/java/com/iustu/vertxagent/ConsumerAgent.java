@@ -66,7 +66,7 @@ public class ConsumerAgent {
                 Set<Endpoint> endpointSet = new HashSet<>(endpoints);
                 for (Endpoint endpoint : endpointSet) {
                     count = Collections.frequency(endpoints, endpoint);
-                    ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, workerGroup, 2 * count);
+                    ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, workerGroup, 4 * count);
                     AgentClient client = new AgentClient(connectionManager);
                     agentClientList.add(client);
 //                    agentClientMap.put(endpoint.getHost() + endpoint.getPort(), client);
