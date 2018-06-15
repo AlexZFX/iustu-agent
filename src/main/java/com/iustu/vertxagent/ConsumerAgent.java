@@ -52,7 +52,7 @@ public class ConsumerAgent {
         EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
 //        EventLoopGroup consumerWorkerGroup = new EpollEventLoopGroup(8);
-//        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
+        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
@@ -66,7 +66,7 @@ public class ConsumerAgent {
                 Set<Endpoint> endpointSet = new HashSet<>(endpoints);
                 for (Endpoint endpoint : endpointSet) {
                     count = Collections.frequency(endpoints, endpoint);
-                    ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, workerGroup, 8 * count);
+                    ConnectionManager connectionManager = new ConnectionManager(endpoint.getHost(), endpoint.getPort(), type, workerGroup, 2 * count);
                     AgentClient client = new AgentClient(connectionManager);
                     agentClientList.add(client);
 //                    agentClientMap.put(endpoint.getHost() + endpoint.getPort(), client);

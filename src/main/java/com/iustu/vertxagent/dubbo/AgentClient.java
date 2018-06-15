@@ -23,7 +23,7 @@ public class AgentClient {
 
     private final ConnectionManager connectionManager;
 
-    private static final AtomicLong atomicLong = new AtomicLong(0);
+    public static final AtomicLong atomicLong = new AtomicLong(0);
 
     public AgentClient(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
