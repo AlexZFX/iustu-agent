@@ -4,10 +4,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class ConnectionManager implements RpcClientConnection.OnConnectionListener {
 
 
@@ -15,13 +11,13 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
 
     private final int nConns;
 
-    private final AtomicInteger connIndex = new AtomicInteger(0);
-//    private int connIndex = 0;
+    //    private AtomicInteger connIndex = new AtomicInteger(0);
+    private int connIndex = 0;
 
 //    private Random random = new Random();
 
     private final Object lock = new Object();
-    private final List<Connection> conns = new ArrayList<>();
+    //    private final List<Connection> conns = new ArrayList<>();
     private Connection pConn;
 
     private final String host;
@@ -52,33 +48,42 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
      * @return
      */
     public ChannelFuture getChannelFuture() {
-        try {
-            if (conns.size() == nConns) {
-//                return conns.get(connIndex++ % nConns).connectChannel();
-                return conns.get(connIndex.getAndIncrement() % nConns).connectChannel();
-            }
-        } catch (IndexOutOfBoundsException e) {
-            e.printStackTrace();
-        }
-
-        synchronized (lock) {
-            final int size = conns.size();
-            if (size == 0) {
+        if (pConn == null) {
+            synchronized (lock) {
                 if (pConn == null) {
                     initPConn();
                 }
                 return pConn.connectChannel();
-            } else {
-                if (size < nConns && pConn == null) {
-                    initPConn();
-                    pConn.connectChannel();
-                }
-
-//                return conns.get(random.nextInt(conns.size())).connectChannel();
-//                return conns.get(connIndex++ % conns.size()).connectChannel();
-                return conns.get(connIndex.getAndIncrement() % conns.size()).connectChannel();
             }
         }
+        return pConn.connectChannel();
+//        try {
+//            if (conns.size() == nConns) {
+//                return conns.get(connIndex++ % nConns).connectChannel();
+////                return conns.get(connIndex.getAndIncrement() % nConns).connectChannel();
+//            }
+//        } catch (IndexOutOfBoundsException e) {
+//            e.printStackTrace();
+//        }
+//
+//        synchronized (lock) {
+//            final int size = conns.size();
+//            if (size == 0) {
+//                if (pConn == null) {
+//                    initPConn();
+//                }
+//                return pConn.connectChannel();
+//            } else {
+//                if (size < nConns && pConn == null) {
+//                    initPConn();
+//                    pConn.connectChannel();
+//                }
+//
+////                return conns.get(random.nextInt(conns.size())).connectChannel();
+//                return conns.get(connIndex++ % conns.size()).connectChannel();
+////                return conns.get(connIndex.getAndIncrement() % conns.size()).connectChannel();
+//            }
+//        }
     }
 
     private void initPConn() {
@@ -93,13 +98,16 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
 
     @Override
     public void onConnectionConnected(Connection conn) {
-        synchronized (lock) {
-            if (pConn == conn) {
-                pConn = null;
-            }
-
-            conns.add(conn);
-        }
+//        synchronized (lock) {
+//            if (pConn == conn) {
+//                return;
+//            }
+//            if (pConn == conn) {
+//                pConn = null;
+//            }
+//
+//            conns.add(conn);
+//        }
     }
 
     @Override
@@ -114,7 +122,8 @@ public class ConnectionManager implements RpcClientConnection.OnConnectionListen
     @Override
     public void onConnectionClosed(Connection conn) {
         synchronized (lock) {
-            conns.remove(conn);
+            pConn = null;
+//            conns.remove(conn);
         }
     }
 }
