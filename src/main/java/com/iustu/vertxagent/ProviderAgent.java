@@ -10,9 +10,13 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
@@ -41,10 +45,10 @@ public class ProviderAgent {
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
 //        EventLoopGroup providerWorkerGroup = new NioEventLoopGroup(8);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
-        EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
-        EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
+        EventLoopGroup eventLoopGroup = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
+        EventLoopGroup workerGroup = Epoll.isAvailable() ? new EpollEventLoopGroup(16) : new NioEventLoopGroup(16);
 //        EventLoopGroup providerWorkerGroup = new EpollEventLoopGroup(8);
-        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
+//        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
         rpcClient = new RpcClient(workerGroup);
 //        EventExecutorGroup executors = new DefaultEventExecutorGroup(8);
         ProviderInBoundHandler providerInBoundHandler = new ProviderInBoundHandler(registry, rpcClient);
@@ -52,7 +56,7 @@ public class ProviderAgent {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
 //                    .channel(NioServerSocketChannel.class)
-                    .channel(EpollServerSocketChannel.class)
+                    .channel(Epoll.isAvailable() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
@@ -85,7 +89,9 @@ public class ProviderAgent {
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
-                    .childOption(ChannelOption.TCP_NODELAY, true);
+//                    .childOption(ChannelOption.TCP_NODELAY, true)
+                    .childOption(Epoll.isAvailable() ? EpollChannelOption.TCP_CORK : ChannelOption.TCP_NODELAY, true)
+            ;
             logger.info("server start:" + serverPort);
             //绑定端口，开始接受进来的连接
             ChannelFuture channelFuture = bootstrap.bind(serverPort).sync();

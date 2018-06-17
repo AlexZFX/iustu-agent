@@ -11,9 +11,13 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
@@ -49,10 +53,10 @@ public class ConsumerAgent {
 
     public void start() throws Exception {
         // TODO: 2018/6/6 配置线程数
-        EventLoopGroup eventLoopGroup = new EpollEventLoopGroup(1);
-        EventLoopGroup workerGroup = new EpollEventLoopGroup(16);
+        EventLoopGroup eventLoopGroup = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
+        EventLoopGroup workerGroup = Epoll.isAvailable() ? new EpollEventLoopGroup(16) : new NioEventLoopGroup(16);
 //        EventLoopGroup consumerWorkerGroup = new EpollEventLoopGroup(8);
-        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
+//        ((EpollEventLoopGroup) workerGroup).setIoRatio(70);
 //        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
 //        EventLoopGroup workerGroup = new NioEventLoopGroup(16);
 //        ((NioEventLoopGroup) workerGroup).setIoRatio(70);
@@ -81,7 +85,7 @@ public class ConsumerAgent {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(eventLoopGroup, workerGroup)
 //                    .channel(NioServerSocketChannel.class)
-                    .channel(EpollServerSocketChannel.class)
+                    .channel(Epoll.isAvailable() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
@@ -116,7 +120,8 @@ public class ConsumerAgent {
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
-                    .childOption(ChannelOption.TCP_NODELAY, true)
+//                    .childOption(ChannelOption.TCP_NODELAY, true)
+                    .childOption(Epoll.isAvailable() ? EpollChannelOption.TCP_CORK : ChannelOption.TCP_NODELAY, true)
             ;
             logger.info("server start:" + serverPort);
             //绑定端口，开始接受进来的连接

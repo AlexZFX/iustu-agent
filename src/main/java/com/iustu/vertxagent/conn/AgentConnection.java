@@ -4,7 +4,10 @@ import com.iustu.vertxagent.dubbo.AgentInitializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
  * Author : Alex
@@ -23,9 +26,10 @@ public class AgentConnection extends Connection {
         if (channelFuture == null) {
             channelFuture = new Bootstrap().group(eventLoopGroup)
                     .option(ChannelOption.SO_KEEPALIVE, true)
-                    .option(ChannelOption.TCP_NODELAY, true)
+//                    .option(ChannelOption.TCP_NODELAY, true)
+                    .option(Epoll.isAvailable() ? EpollChannelOption.TCP_CORK : ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                    .channel(EpollSocketChannel.class)
+                    .channel(Epoll.isAvailable() ? EpollSocketChannel.class : NioSocketChannel.class)
 //                    .channel(NioSocketChannel.class)
                     .handler(new AgentInitializer())
                     .connect(host, port).addListener((ChannelFutureListener) future -> {
