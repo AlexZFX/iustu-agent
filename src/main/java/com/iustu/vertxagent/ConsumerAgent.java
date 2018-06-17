@@ -12,7 +12,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -120,8 +119,8 @@ public class ConsumerAgent {
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
-//                    .childOption(ChannelOption.TCP_NODELAY, true)
-                    .childOption(Epoll.isAvailable() ? EpollChannelOption.TCP_CORK : ChannelOption.TCP_NODELAY, true)
+                    .childOption(ChannelOption.TCP_NODELAY, true)
+//                    .childOption(Epoll.isAvailable() ? EpollChannelOption.TCP_CORK : ChannelOption.TCP_NODELAY, true)
             ;
             logger.info("server start:" + serverPort);
             //绑定端口，开始接受进来的连接
