@@ -102,7 +102,7 @@ public class EtcdRegistry implements IRegistry {
             } else if ("large".equals(size)) {
                 endpoints.add(new Endpoint(host, port));
                 endpoints.add(new Endpoint(host, port));
-//                endpoints.add(new Endpoint(host, port));
+                endpoints.add(new Endpoint(host, port));
             } else {
                 endpoints.add(new Endpoint(host, port));
             }
