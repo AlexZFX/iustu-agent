@@ -71,7 +71,8 @@ public class RpcClient {
                 if (writeFuture.isCancelled()) {
                     rpcFuture.cancel(false);
                 } else if (writeFuture.isSuccess()) {
-                    CommonHolder.registerFuture(writeFuture.channel(), request.getId(), rpcFuture);
+//                    CommonHolder.registerFuture(writeFuture.channel(), request.getId(), rpcFuture);
+                    CommonHolder.registerFuture(request.getId(), rpcFuture);
                 } else {
                     rpcFuture.tryFailure(writeFuture.cause());
                 }

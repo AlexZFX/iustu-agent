@@ -64,7 +64,8 @@ public class AgentClient {
                 .build();
         channel.writeAndFlush(request).addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
-                CommonHolder.registerFuture(future.channel(), requestId, agentFuture);
+//                CommonHolder.registerFuture(future.channel(), requestId, agentFuture);
+                CommonHolder.registerFuture(requestId, agentFuture);
             } else if (future.isCancelled()) {
                 agentFuture.cancel(false);
             } else {

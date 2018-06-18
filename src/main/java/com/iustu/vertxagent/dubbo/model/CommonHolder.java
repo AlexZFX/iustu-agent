@@ -1,38 +1,45 @@
 package com.iustu.vertxagent.dubbo.model;
 
-import io.netty.channel.Channel;
-import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
-
 import java.util.HashMap;
-import java.util.Map;
 
 public class CommonHolder {
 
     // key: requestId     value: CommonFuture
-    public static final AttributeKey<Map<Long, CommonFuture>> rpcFutureMapKey = AttributeKey.valueOf("CommonFutureMap");
+//    public static final AttributeKey<Map<Long, CommonFuture>> rpcFutureMapKey = AttributeKey.valueOf("CommonFutureMap");
 
+    public static ThreadLocal<HashMap<Long, CommonFuture>> futureMapHolder = ThreadLocal.withInitial(HashMap::new);
 //    public static final Object lock = new Object();
 
-    public static void registerFuture(Channel channel, long requestId, CommonFuture commonFuture) {
+
+    public static void registerFuture(long requestId, CommonFuture commonFuture) {
+        futureMapHolder.get().put(requestId, commonFuture);
+    }
+
+//    public static void registerFuture(Channel channel, long requestId, CommonFuture commonFuture) {
 //        HashMap<Long, CommonFuture> futureMap = channelMap.computeIfAbsent(channel.id(), k -> new HashMap<>());
-//        futureMap.put(requestId, commonFuture);
-        Attribute<Map<Long, CommonFuture>> attr = channel.attr(rpcFutureMapKey);
-        Map<Long, CommonFuture> commonFutureMap = attr.get();
-        if (commonFutureMap == null) {
-            commonFutureMap = new HashMap<>();
-            attr.setIfAbsent(commonFutureMap);
-        }
-        commonFutureMap.put(requestId, commonFuture);
+////        futureMap.put(requestId, commonFuture);
+//        Attribute<Map<Long, CommonFuture>> attr = channel.attr(rpcFutureMapKey);
+//        Map<Long, CommonFuture> commonFutureMap = attr.get();
+//        if (commonFutureMap == null) {
+//            commonFutureMap = new HashMap<>();
+//            attr.setIfAbsent(commonFutureMap);
+//        }
+//        commonFutureMap.put(requestId, commonFuture);
 //        CommonFuture oldFuture = commonFutureMap.put(requestId, commonFuture);
 //        if (oldFuture != null) {
 //            throw new IllegalStateException("requestId " + requestId + " exists");
 //        }
+//    }
+
+
+    public static CommonFuture getAndRemoveFuture(long requestId) {
+        return futureMapHolder.get().remove(requestId);
     }
 
-    public static CommonFuture getAndRemoveFuture(Channel channel, long requestId) {
-        Attribute<Map<Long, CommonFuture>> attr = channel.attr(rpcFutureMapKey);
-        Map<Long, CommonFuture> futureMap = attr.get();
-        return futureMap.remove(requestId);
-    }
+//    public static CommonFuture getAndRemoveFuture(Channel channel, long requestId) {
+//        Attribute<Map<Long, CommonFuture>> attr = channel.attr(rpcFutureMapKey);
+//        Map<Long, CommonFuture> futureMap = attr.get();
+//        return futureMap.remove(requestId);
+//    }
+
 }

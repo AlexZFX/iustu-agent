@@ -3,7 +3,6 @@ package com.iustu.vertxagent.dubbo;
 import com.iustu.vertxagent.dubbo.model.AgentResponseProto;
 import com.iustu.vertxagent.dubbo.model.CommonFuture;
 import com.iustu.vertxagent.dubbo.model.CommonHolder;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
@@ -20,9 +19,10 @@ public class AgentHandler extends SimpleChannelInboundHandler<AgentResponseProto
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, AgentResponseProto.AgentResponse msg) {
-        final Channel channel = ctx.channel();
+//        final Channel channel = ctx.channel();
         final long requestId = msg.getId();
-        final CommonFuture agentFuture = CommonHolder.getAndRemoveFuture(channel, requestId);
+//        final CommonFuture agentFuture = CommonHolder.getAndRemoveFuture(channel, requestId);
+        final CommonFuture agentFuture = CommonHolder.getAndRemoveFuture(requestId);
         if (agentFuture == null) {
             logger.error("agentFuture not found and RequestId = " + requestId);
             throw new IllegalArgumentException("agentFuture not found");
