@@ -144,7 +144,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
     }
 
 
-    private Map<String, String> getParamMap(FullHttpRequest httpRequest) throws IOException {
+    private static Map<String, String> getParamMap(FullHttpRequest httpRequest) throws IOException {
         Map<String, String> paramMap = new HashMap<>();
         if (httpRequest.method() == HttpMethod.GET) {
             QueryStringDecoder decoder = new QueryStringDecoder(httpRequest.uri());
