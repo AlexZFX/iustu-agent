@@ -12,7 +12,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -116,7 +115,7 @@ public class ConsumerAgent {
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024)
-                    .option(EpollChannelOption.TCP_CORK, true)
+//                    .option(EpollChannelOption.TCP_CORK, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT) //使用对象池，加上后感觉跑分降低了
                     .childOption(ChannelOption.SO_KEEPALIVE, true)

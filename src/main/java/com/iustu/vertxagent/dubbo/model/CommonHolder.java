@@ -11,7 +11,7 @@ public class CommonHolder {
 //    public static final Object lock = new Object();
 
 
-    public static void registerFuture(long requestId, CommonFuture commonFuture) {
+    public static void registerFuture(Long requestId, CommonFuture commonFuture) {
         futureMapHolder.get().put(requestId, commonFuture);
     }
 
@@ -32,7 +32,7 @@ public class CommonHolder {
 //    }
 
 
-    public static CommonFuture getAndRemoveFuture(long requestId) {
+    public static CommonFuture getAndRemoveFuture(Long requestId) {
         return futureMapHolder.get().remove(requestId);
     }
 
