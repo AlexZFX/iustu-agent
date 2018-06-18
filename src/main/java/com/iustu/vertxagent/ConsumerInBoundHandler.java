@@ -12,6 +12,7 @@ import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import io.netty.util.AsciiString;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
+//import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
+//import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 
 /**
  * Author : Alex
@@ -63,6 +64,8 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
 //        this.agentClientMap = agentClientMap;
 //    }
 
+    private static final AsciiString CONTENT_TYPE = AsciiString.cached("Content-Type");
+    private static final AsciiString CONTENT_LENGTH = AsciiString.cached("Content-Length");
     //读入consumer的请求
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws IOException {

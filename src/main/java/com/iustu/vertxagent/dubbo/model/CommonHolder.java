@@ -1,5 +1,7 @@
 package com.iustu.vertxagent.dubbo.model;
 
+import io.netty.util.concurrent.FastThreadLocal;
+
 import java.util.HashMap;
 
 public class CommonHolder {
@@ -7,11 +9,15 @@ public class CommonHolder {
     // key: requestId     value: CommonFuture
 //    public static final AttributeKey<Map<Long, CommonFuture>> rpcFutureMapKey = AttributeKey.valueOf("CommonFutureMap");
 
-    public static ThreadLocal<HashMap<Long, CommonFuture>> futureMapHolder = ThreadLocal.withInitial(HashMap::new);
+    public static FastThreadLocal<HashMap<Long, CommonFuture>> futureMapHolder = new FastThreadLocal<>();
+
 //    public static final Object lock = new Object();
 
 
     public static void registerFuture(Long requestId, CommonFuture commonFuture) {
+        if (futureMapHolder.get() == null) {
+            futureMapHolder.set(new HashMap<Long, CommonFuture>());
+        }
         futureMapHolder.get().put(requestId, commonFuture);
     }
 
