@@ -24,7 +24,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.1.12.Final</version>
+            <version>4.1.25.Final</version>
         </dependency>
 
         <dependency>
@@ -70,17 +70,17 @@
         <dependency>
             <groupId>com.coreos</groupId>
             <artifactId>jetcd-core</artifactId>
-            <version>0.0.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-codec-http2</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-handler-proxy</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>0.0.2</version>
+            <!--<exclusions>-->
+            <!--<exclusion>-->
+            <!--<groupId>io.netty</groupId>-->
+            <!--<artifactId>netty-codec-http2</artifactId>-->
+            <!--</exclusion>-->
+            <!--<exclusion>-->
+            <!--<groupId>io.netty</groupId>-->
+            <!--<artifactId>netty-handler-proxy</artifactId>-->
+            <!--</exclusion>-->
+            <!--</exclusions>-->
         </dependency>
     </dependencies>
 

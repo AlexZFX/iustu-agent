@@ -9,6 +9,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.Attribute;
+import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -132,6 +133,7 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
                 HttpHeaders headers = response.headers();
                 headers.set(CONTENT_TYPE, "text/plain; charset=UTF-8");
                 headers.set(CONTENT_LENGTH, String.valueOf(buffer.readableBytes()));
+//                headers.set(CONNECTION,KEEP_ALIVE);
                 channel.writeAndFlush(response)
                 ;
             } else if (future.isCancelled()) {
@@ -150,13 +152,15 @@ public class ConsumerInBoundHandler extends SimpleChannelInboundHandler<FullHttp
             QueryStringDecoder decoder = new QueryStringDecoder(httpRequest.uri());
             decoder.parameters().forEach((key, value) -> paramMap.put(key, value.get(0)));
         } else if (httpRequest.method() == HttpMethod.POST) {
-            HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(httpRequest);
-            decoder.offer(httpRequest);
+            HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(new DefaultHttpDataFactory(false), httpRequest);
+//            decoder.offer(httpRequest);
             List<InterfaceHttpData> paramList = decoder.getBodyHttpDatas();
             for (InterfaceHttpData param : paramList) {
                 Attribute data = (Attribute) param;
                 paramMap.put(data.getName(), data.getValue());
             }
+            // 解决内存泄漏
+            decoder.destroy();
         } else {
             logger.error("not support method", httpRequest.uri());
         }

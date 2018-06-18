@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 public class Main {
     private static Logger logger = LoggerFactory.getLogger(Main.class);
 
-    public static final String type = System.getProperty("type");
+    private static final String type = System.getProperty("type");
 
     public static void main(String[] args) {
         //netty自带的内存泄漏检测

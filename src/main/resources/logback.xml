@@ -28,7 +28,7 @@
     <logger name="io.vertx" level="info"/>
     <logger name="io.vertx.starter" level="debug"/>
 
-    <root level="debug">
+    <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>
 
