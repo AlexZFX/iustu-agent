@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.iustu</groupId>
-    <artifactId>netty-agent</artifactId>
+    <artifactId>iustu-agent</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -103,7 +103,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>com.iustu.vertxagent.Main</mainClass>
+                            <mainClass>com.iustu.agent.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
